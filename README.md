@@ -1,16 +1,26 @@
-# React + Vite
+# [Miniproyecto1] - FrontEnd
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Organizador de Eventos Independientes — Mini-proyecto 1.
 
-Currently, two official plugins are available:
+## Requisitos
+- Node.js 18 o superior
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Instalación
 
-## React Compiler
+\`\`\`bash
+npm install
+\`\`\`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Correr en desarrollo
 
-## Expanding the ESLint configuration
+\`\`\`bash
+npm run dev
+\`\`\`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Estructura del proyecto
+
+- `src/pages/` — vistas por ruta
+- `src/components/` — componentes reutilizables
+- `src/services/` — comunicación con la API
+- `src/hooks/` — lógica reutilizable
+- `src/routes/` — configuración de rutas
