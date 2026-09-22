@@ -1,19 +1,22 @@
-.crear-evento {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 24px;
+.forms-principal {
+  width: 100%;
+  min-height: 100svh;
+  display: grid;
+  place-items: right;
+  padding: clamp(16px, 4vw, 48px);
+  box-sizing: border-box;
 }
 
-.hint {
-  color: #666;
-  font-size: 0.9rem;
-  margin-bottom: 16px;
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px 24px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
+  min-width: 0;
 }
 
 .field label {
@@ -44,5 +47,110 @@
   color: #c62828;
   padding: 8px 12px;
   border-radius: 4px;
-  margin-bottom: 16px;
+  margin-top: 20px;
+}
+
+.forms {
+  width: 100%;
+  max-width: 960px;
+  padding: clamp(24px, 5vw, 36px);
+  box-sizing: border-box;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background-color: #fff;
+  box-shadow: 0 12px 32px rgba(31, 24, 55, 0.1);
+  color: #374151;
+  color-scheme: light;
+  text-align: left;
+}
+
+.forms form {
+  width: 100%;
+}
+.forms p {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+.forms input,
+.forms select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+}
+/*botones*/
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.form-actions button {
+  min-height: 42px;
+}
+
+.boton-guardado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #4f46e5;
+  border: none;
+  cursor: pointer;
+}
+.boton-cancelar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #0c0c0c;
+  background-color: #ffffff;
+  border-color:#090909;
+  cursor: pointer;
+}
+.boton-adicional {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-right: auto;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1dc4;
+  background-color: #a7c0ed;
+  border: none;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .forms {
+    padding: 24px 18px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions button {
+    width: 100%;
+    margin-right: 0;
+  }
 }
