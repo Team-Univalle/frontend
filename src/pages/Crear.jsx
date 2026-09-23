@@ -24,7 +24,12 @@ export default function Crear() {
     fecha: '',
     hora: '',
     limite: '',
+    Lugar: '',
   });
+  const [logisticsItems, setLogisticsItems] = useState([
+    { id: 1, gestion: '', fechaObjetivo: '', horasEstimadas: '' },
+  ]);
+  const [logisticsErrors, setLogisticsErrors] = useState({});
   const [fieldErrors, setFieldErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
   const [status, setStatus] = useState('idle'); // idle | loading
@@ -38,27 +43,84 @@ export default function Crear() {
     }
   }
 
+  function handleLogisticsChange(id, field, value) {
+    setLogisticsItems((items) =>
+      items.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    );
+
+    const errorKey = `${id}-${field}`;
+    if (logisticsErrors[errorKey]) {
+      setLogisticsErrors((errors) => ({ ...errors, [errorKey]: undefined }));
+    }
+  }
+
+  function addLogisticsItem() {
+    const nextId = Math.max(...logisticsItems.map((item) => item.id), 0) + 1;
+    setLogisticsItems((items) => [
+      ...items,
+      { id: nextId, gestion: '', fechaObjetivo: '', horasEstimadas: '' },
+    ]);
+  }
+
+  function quitLogisticsItem(id) {
+    setLogisticsItems((items) => items.filter((item) => item.id !== id));
+
+    setLogisticsErrors((errors) =>
+      Object.fromEntries(
+        Object.entries(errors).filter(([key]) => !key.startsWith(`${id}-`))
+      )
+    );
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setGeneralError('');
 
     const errors = validateEvent(form);
-    if (Object.keys(errors).length > 0) {
+    const planErrors = {};
+
+    logisticsItems.forEach((item) => {
+      if (!item.gestion.trim()) {
+        planErrors[`${item.id}-gestion`] = 'Describe la gestión.';
+      }
+      if (!item.fechaObjetivo) {
+        planErrors[`${item.id}-fechaObjetivo`] = 'Selecciona una fecha.';
+      }
+      if (!item.horasEstimadas || Number(item.horasEstimadas) <= 0) {
+        planErrors[`${item.id}-horasEstimadas`] = 'Debe ser mayor que 0';
+      }
+    });
+
+    if (Object.keys(errors).length > 0 || Object.keys(planErrors).length > 0) {
       setFieldErrors(errors);
+      setLogisticsErrors(planErrors);
       return;
     }
 
     setFieldErrors({});
+    setLogisticsErrors({});
     setStatus('loading');
 
-        try {
-      const evento = await createEvent(form);
+    try {
+      const evento = await createEvent({
+        ...form,
+        planLogistico: logisticsItems.map((item) => ({
+          gestion: item.gestion,
+          fechaObjetivo: item.fechaObjetivo,
+          horasEstimadas: Number(item.horasEstimadas),
+        })),
+      });
       setStatus('idle');
 
       if (!evento?.id) {
         // El backend respondió, pero sin el id esperado — no podemos redirigir con seguridad
-        setGeneralError('El evento se creó, pero no se pudo confirmar su identificador.');
-        setToast({ message: 'Evento creado, pero hubo un problema al redirigir.', type: 'error' });
+        setGeneralError(
+          'El evento se creó, pero no se pudo confirmar su identificador.'
+        );
+        setToast({
+          message: 'Evento creado, pero hubo un problema al redirigir.',
+          type: 'error',
+        });
         return;
       }
 
@@ -76,11 +138,15 @@ export default function Crear() {
 
   return (
     <main className="forms-principal">
+      <h1>Crear Evento</h1>
+      <p>Formulario de creación</p>
+
       <section className="forms" aria-label="Crear evento">
         <p>Datos del evento</p>
+
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-grid">
-            <div className="field">
+            <div className="field field--titulo">
               <label htmlFor="titulo">Nombre del evento</label>
               <input
                 id="titulo"
@@ -89,7 +155,9 @@ export default function Crear() {
                 value={form.titulo}
                 onChange={handleChange}
                 aria-invalid={!!fieldErrors.titulo}
-                aria-describedby={fieldErrors.titulo ? 'titulo-error' : undefined}
+                aria-describedby={
+                  fieldErrors.titulo ? 'titulo-error' : undefined
+                }
                 disabled={status === 'loading'}
               />
               {fieldErrors.titulo && (
@@ -99,26 +167,7 @@ export default function Crear() {
               )}
             </div>
 
-            <div className="field">
-              <label htmlFor="contacto">Cliente o contacto</label>
-              <input
-                id="contacto"
-                name="contacto"
-                type="text"
-                value={form.contacto}
-                onChange={handleChange}
-                aria-invalid={!!fieldErrors.contacto}
-                aria-describedby={fieldErrors.contacto ? 'contacto-error' : undefined}
-                disabled={status === 'loading'}
-              />
-              {fieldErrors.contacto && (
-                <span id="contacto-error" className="field-error">
-                  {fieldErrors.contacto}
-                </span>
-              )}
-            </div>
-
-            <div className="field">
+            <div className="field field--tipo">
               <label htmlFor="tipo">Tipo de evento</label>
               <select
                 id="tipo"
@@ -143,7 +192,47 @@ export default function Crear() {
               )}
             </div>
 
-            <div className="field">
+            <div className="field field--contacto">
+              <label htmlFor="contacto">Cliente o contacto</label>
+              <input
+                id="contacto"
+                name="contacto"
+                type="text"
+                value={form.contacto}
+                onChange={handleChange}
+                aria-invalid={!!fieldErrors.contacto}
+                aria-describedby={
+                  fieldErrors.contacto ? 'contacto-error' : undefined
+                }
+                disabled={status === 'loading'}
+              />
+              {fieldErrors.contacto && (
+                <span id="contacto-error" className="field-error">
+                  {fieldErrors.contacto}
+                </span>
+              )}
+            </div>
+
+            <div className="field field--lugar">
+              <label htmlFor="Lugar">Lugar</label>
+              <input
+                id="Lugar"
+                name="Lugar"
+                type="text"
+                value={form.Lugar}
+                onChange={handleChange}
+                aria-invalid={!!fieldErrors.Lugar}
+                aria-describedby={fieldErrors.Lugar ? 'Lugar-error' : undefined}
+                disabled={status === 'loading'}
+              />
+              {fieldErrors.Lugar && (
+                <span id="Lugar-error" className="field-error">
+                  {fieldErrors.Lugar}
+                </span>
+              )}
+            </div>
+
+            <div className="field field--fecha">
               <label htmlFor="fecha">Fecha del evento</label>
               <input
                 id="fecha"
@@ -162,7 +251,7 @@ export default function Crear() {
               )}
             </div>
 
-            <div className="field">
+            <div className="field field--hora">
               <label htmlFor="hora">Hora del evento</label>
               <input
                 id="hora"
@@ -181,7 +270,7 @@ export default function Crear() {
               )}
             </div>
 
-            <div className="field">
+            <div className="field field--limite">
               <label htmlFor="limite">Límite diario</label>
               <input
                 id="limite"
@@ -189,8 +278,12 @@ export default function Crear() {
                 type="number"
                 value={form.limite}
                 onChange={handleChange}
+                max="8"
+                min="1"
                 aria-invalid={!!fieldErrors.limite}
-                aria-describedby={fieldErrors.limite ? 'limite-error' : undefined}
+                aria-describedby={
+                  fieldErrors.limite ? 'limite-error' : undefined
+                }
                 disabled={status === 'loading'}
               />
               {fieldErrors.limite && (
@@ -207,14 +300,130 @@ export default function Crear() {
             </div>
           )}
 
+          <section
+            className="plan-logistico"
+            aria-labelledby="plan-logistico-title"
+          >
+            <div className="plan-logistico__header">
+              <div>
+                <h2 id="plan-logistico-title">Plan logístico inicial</h2>
+                <p>
+                  Añade subtareas con fecha objetivo y esfuerzo mayor que cero.
+                </p>
+              </div>
+              <button
+                className="boton-adicional"
+                type="button"
+                onClick={addLogisticsItem}
+                disabled={status === 'loading'}
+              >
+                + Añadir gestión
+              </button>
+            </div>
+
+            <div className="plan-logistico__lista">
+              {logisticsItems.map((item, index) => (
+                <div className="gestion-card" key={item.id}>
+                  <span className="gestion-card__numero" aria-hidden="true">
+                    {index + 1}
+                  </span>
+
+                  <div className="gestion-field gestion-field--nombre">
+                    <label htmlFor={`gestion-${item.id}`}>Gestión</label>
+                    <input
+                      id={`gestion-${item.id}`}
+                      type="text"
+                      value={item.gestion}
+                      onChange={(e) =>
+                        handleLogisticsChange(
+                          item.id,
+                          'gestion',
+                          e.target.value
+                        )
+                      }
+                      aria-invalid={!!logisticsErrors[`${item.id}-gestion`]}
+                      disabled={status === 'loading'}
+                    />
+                    {logisticsErrors[`${item.id}-gestion`] && (
+                      <span className="field-error">
+                        {logisticsErrors[`${item.id}-gestion`]}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="gestion-field">
+                    <label htmlFor={`fecha-objetivo-${item.id}`}>
+                      Fecha objetivo
+                    </label>
+                    <input
+                      id={`fecha-objetivo-${item.id}`}
+                      type="date"
+                      value={item.fechaObjetivo}
+                      onChange={(e) =>
+                        handleLogisticsChange(
+                          item.id,
+                          'fechaObjetivo',
+                          e.target.value
+                        )
+                      }
+                      aria-invalid={
+                        !!logisticsErrors[`${item.id}-fechaObjetivo`]
+                      }
+                      disabled={status === 'loading'}
+                    />
+                    {logisticsErrors[`${item.id}-fechaObjetivo`] && (
+                      <span className="field-error">
+                        {logisticsErrors[`${item.id}-fechaObjetivo`]}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="gestion-field gestion-field--horas">
+                    <label htmlFor={`horas-estimadas-${item.id}`}>
+                      Horas estimadas
+                    </label>
+                    <input
+                      id={`horas-estimadas-${item.id}`}
+                      type="number"
+                      min="0"
+                      step="0.25"
+                      placeholder="Ej. 1.5"
+                      value={item.horasEstimadas}
+                      onChange={(e) =>
+                        handleLogisticsChange(
+                          item.id,
+                          'horasEstimadas',
+                          e.target.value
+                        )
+                      }
+                      aria-invalid={
+                        !!logisticsErrors[`${item.id}-horasEstimadas`]
+                      }
+                      disabled={status === 'loading'}
+                    />
+                    {logisticsErrors[`${item.id}-horasEstimadas`] && (
+                      <span className="field-error">
+                        {logisticsErrors[`${item.id}-horasEstimadas`]}
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    className="boton-eliminar-gestion"
+                    type="button"
+                    onClick={() => quitLogisticsItem(item.id)}
+                    disabled={status === 'loading'}
+                    aria-label={`Eliminar gestión ${index + 1}`}
+                    title="Eliminar gestión"
+                  >
+                    <span aria-hidden="true">🗑</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <div className="form-actions">
-            <button
-              className="boton-adicional"
-              type="button"
-              disabled={status === 'loading'}
-            >
-              + Añadir gestión
-            </button>
             <button
               className="boton-cancelar"
               type="button"
