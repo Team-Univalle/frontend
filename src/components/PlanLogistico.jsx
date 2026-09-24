@@ -179,7 +179,13 @@ export default function PlanLogistico({
               Cancelar
             </button>
             <button className="boton-guardado" type="submit" disabled={saving}>
-              {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Guardar subtarea'}
+              {saving
+                ? 'Guardando...'
+                : submitError
+                  ? 'Reintentar'
+                  : isEditing
+                    ? 'Guardar cambios'
+                    : 'Guardar subtarea'}
             </button>
           </div>
         </form>
@@ -201,13 +207,15 @@ export default function PlanLogistico({
               <article className="gestion-card gestion-card--lectura" key={item.id}>
                 <div className="gestion-resumen gestion-resumen--titulo">
                   <strong>{item.gestion}</strong>
-                  <span>{item.estado || 'Pendiente'}</span>
+                  <span>Gestión logística</span>
                 </div>
                 <div className="gestion-resumen gestion-resumen--tiempo">
                   <strong className="gestion-horas">{item.horasEstimadas} h</strong>
                   <span>{formatDate(item.fechaObjetivo)}</span>
                 </div>
-                <span className="gestion-estado">Próxima</span>
+                <span className={`gestion-estado gestion-estado--${String(item.estado || 'Pendiente').toLowerCase()}`}>
+                  {item.estado || 'Pendiente'}
+                </span>
                 <div className="gestion-card__acciones">
                   <button type="button" onClick={() => onEdit(item)} disabled={deletingId === item.id}>
                     <Pencil size={15} aria-hidden="true" /> Editar

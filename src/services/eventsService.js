@@ -49,6 +49,12 @@ export async function createEvent(eventData) {
   return normalizeEvent(response);
 }
 
+export async function getEvents() {
+  const response = await apiClient('/events');
+  if (Array.isArray(response)) return response.map(normalizeEvent);
+  return { ...response, results: (response?.results ?? []).map(normalizeEvent) };
+}
+
 export async function getEvent(eventId) {
   const response = await apiClient(`/events/${eventId}`);
   return normalizeEvent(response);
@@ -60,4 +66,8 @@ export async function updateEvent(eventId, eventData) {
     body: JSON.stringify(toEventPayload(eventData)),
   });
   return normalizeEvent(response);
+}
+
+export async function deleteEvent(eventId) {
+  await apiClient(`/events/${eventId}`, { method: 'DELETE' });
 }

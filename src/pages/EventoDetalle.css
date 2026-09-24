@@ -140,6 +140,23 @@
 }
 .detalle-agregar:disabled { cursor: not-allowed; opacity: .55; }
 
+.detalle-eliminar {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 15px;
+  border: 1px solid #c5221f;
+  border-radius: 8px;
+  color: #fff;
+  background: #c5221f;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .detalle-resumen__acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
 .detalle-editar {
   display: inline-flex;
@@ -205,9 +222,9 @@
 .detalle-carga--error { color: #b91c1c; }
 .detalle-carga button { justify-self: center; padding: 9px 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; cursor: pointer; }
 
-.detalle-app .plan-logistico { margin-top: 28px; padding-top: 0; border-top: 0; }
-.detalle-app .plan-logistico__header { margin-bottom: 14px; }
-.detalle-app .plan-logistico__header h2 { font-size: 19px; }
+.detalle-principal .plan-logistico { margin-top: 28px; padding-top: 0; border-top: 0; }
+.detalle-principal .plan-logistico__header { margin-bottom: 14px; }
+.detalle-principal .plan-logistico__header h2 { font-size: 19px; }
 
 @media (max-width: 760px) {
   .detalle-app { grid-template-columns: 1fr; }
@@ -223,6 +240,7 @@
   .detalle-resumen__encabezado { flex-direction: column; }
   .detalle-resumen__acciones { width: 100%; }
   .detalle-editar,
+  .detalle-eliminar,
   .detalle-agregar { width: 100%; }
   .detalle-progreso { width: 100%; }
   .evento-edicion__grid { grid-template-columns: 1fr; }

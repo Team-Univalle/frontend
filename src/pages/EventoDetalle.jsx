@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
-  CalendarCheck2,
-  ChartNoAxesColumnIncreasing,
-  Home,
-  ListChecks,
   Pencil,
   Plus,
+  Trash2,
   UserRound,
 } from 'lucide-react';
+import ConfirmDialog from '../components/ConfirmDialog';
 import PlanLogistico from '../components/PlanLogistico';
 import {
+  deleteEvent,
   getEvent,
   mapEventFieldErrors,
   updateEvent,
@@ -57,11 +56,14 @@ export default function EventoDetalle() {
   const [eventLoading, setEventLoading] = useState(!location.state?.event);
   const [eventLoadError, setEventLoadError] = useState('');
   const [notice, setNotice] = useState(location.state?.warning ?? '');
-  const [isEventEditOpen, setIsEventEditOpen] = useState(false);
+  const [isEventEditOpen, setIsEventEditOpen] = useState(Boolean(location.state?.edit && location.state?.event));
   const [eventDraft, setEventDraft] = useState(location.state?.event ?? null);
   const [eventErrors, setEventErrors] = useState({});
   const [eventSaving, setEventSaving] = useState(false);
   const [eventSubmitError, setEventSubmitError] = useState('');
+  const [eventDeleteOpen, setEventDeleteOpen] = useState(false);
+  const [eventDeleting, setEventDeleting] = useState(false);
+  const [eventDeleteError, setEventDeleteError] = useState('');
 
   const [subtasks, setSubtasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +74,8 @@ export default function EventoDetalle() {
   const [draftErrors, setDraftErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [subtaskToDelete, setSubtaskToDelete] = useState(null);
+  const [subtaskDeleteError, setSubtaskDeleteError] = useState('');
   const [submitError, setSubmitError] = useState('');
 
   const completedSubtasks = subtasks.filter(
@@ -115,6 +119,10 @@ export default function EventoDetalle() {
 
       if (eventResult.status === 'fulfilled') {
         setEventData((current) => ({ ...eventResult.value, limite: current?.limite ?? 6 }));
+        if (location.state?.edit) {
+          setEventDraft(eventResult.value);
+          setIsEventEditOpen(true);
+        }
       } else {
         setEventLoadError(eventResult.reason?.message || 'No fue posible cargar el evento.');
       }
@@ -132,7 +140,7 @@ export default function EventoDetalle() {
     return () => {
       ignore = true;
     };
-  }, [id]);
+  }, [id, location.state?.edit]);
 
   function openCreateForm() {
     setEditingSubtaskId(null);
@@ -203,26 +211,49 @@ export default function EventoDetalle() {
       if (error?.data?.fields) {
         setDraftErrors(mapSubtaskFieldErrors(error.data.fields));
       }
-      setSubmitError(error?.message || 'No fue posible guardar la subtarea. Intenta nuevamente.');
+      setSubmitError(
+        `${editingSubtaskId ? 'No se pudo actualizar la subtarea.' : 'No se pudo crear la subtarea.'} ${error?.message || 'Intenta nuevamente.'}`
+      );
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDeleteSubtask(item) {
-    const confirmed = window.confirm(`¿Eliminar la subtarea “${item.gestion}”?`);
-    if (!confirmed) return;
+  function requestDeleteSubtask(item) {
+    setSubtaskToDelete(item);
+    setSubtaskDeleteError('');
+  }
 
-    setDeletingId(item.id);
+  async function confirmDeleteSubtask() {
+    setDeletingId(subtaskToDelete.id);
+    setSubtaskDeleteError('');
     try {
-      await deleteSubtask(item.id);
-      setSubtasks((current) => current.filter((subtask) => subtask.id !== item.id));
-      if (editingSubtaskId === item.id) closeSubtaskForm();
+      await deleteSubtask(subtaskToDelete.id);
+      setSubtasks((current) => current.filter((subtask) => subtask.id !== subtaskToDelete.id));
+      if (editingSubtaskId === subtaskToDelete.id) closeSubtaskForm();
+      setSubtaskToDelete(null);
       setNotice('Subtarea eliminada correctamente.');
     } catch (error) {
-      setNotice(`⚠ ${error?.message || 'No fue posible eliminar la subtarea.'}`);
+      setSubtaskDeleteError(error?.message || 'No se pudo eliminar la subtarea.');
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  function requestDeleteEvent() {
+    setEventDeleteError('');
+    setEventDeleteOpen(true);
+  }
+
+  async function confirmDeleteEvent() {
+    setEventDeleting(true);
+    setEventDeleteError('');
+    try {
+      await deleteEvent(id);
+      navigate('/eventos', { replace: true, state: { notice: 'Evento eliminado con éxito.' } });
+    } catch (error) {
+      setEventDeleteError(error?.message || 'No se pudo eliminar el evento.');
+      setEventDeleting(false);
     }
   }
 
@@ -255,12 +286,12 @@ export default function EventoDetalle() {
       const updated = await updateEvent(id, eventDraft);
       setEventData((current) => ({ ...updated, limite: current?.limite ?? 6 }));
       setIsEventEditOpen(false);
-      setNotice('Evento actualizado correctamente.');
+      setNotice('Cambios guardados.');
     } catch (error) {
       if (error?.data?.fields) {
         setEventErrors(mapEventFieldErrors(error.data.fields));
       }
-      setEventSubmitError(error?.message || 'No fue posible actualizar el evento.');
+      setEventSubmitError(`No se pudo actualizar el evento. ${error?.message || 'Intenta nuevamente.'}`);
     } finally {
       setEventSaving(false);
     }
@@ -280,28 +311,6 @@ export default function EventoDetalle() {
   }
 
   return (
-    <div className="detalle-app">
-      <aside className="detalle-sidebar" aria-label="Navegación principal">
-        <div className="detalle-logo">
-          <span className="detalle-logo__icon"><CalendarCheck2 size={20} aria-hidden="true" /></span>
-          <span><strong>Organiza</strong><small>Eventos</small></span>
-        </div>
-
-        <nav className="detalle-nav">
-          <button type="button" onClick={() => navigate('/hoy')}><Home size={17} aria-hidden="true" /> <span>Hoy</span></button>
-          <button className="is-active" type="button" aria-current="page"><ListChecks size={17} aria-hidden="true" /> <span>Eventos</span></button>
-          <button type="button" onClick={() => navigate('/crear')}><Plus size={17} aria-hidden="true" /> <span>Crear evento</span></button>
-          <button type="button" onClick={() => navigate('/progreso')}><ChartNoAxesColumnIncreasing size={17} aria-hidden="true" /> <span>Progreso</span></button>
-        </nav>
-
-        <div className="detalle-capacidad">
-          <span>Capacidad diaria</span>
-          <strong>{eventData.limite ?? 6} horas</strong>
-          <progress value={Math.min(Number(eventData.limite ?? 6), 8)} max="8" aria-label="Capacidad diaria" />
-          <small>{Math.min(Number(eventData.limite ?? 6), 8)} h programadas hoy</small>
-        </div>
-      </aside>
-
       <main className="detalle-principal">
         <div className="detalle-contenido">
           <header className="detalle-topbar">
@@ -337,6 +346,9 @@ export default function EventoDetalle() {
                 <button className="detalle-editar" type="button" onClick={openEventEdit} disabled={isEventEditOpen || eventLoading}>
                   <Pencil size={15} aria-hidden="true" /> Editar evento
                 </button>
+                <button className="detalle-eliminar" type="button" onClick={requestDeleteEvent}>
+                  <Trash2 size={15} aria-hidden="true" /> Eliminar
+                </button>
                 <button className="detalle-agregar" type="button" onClick={openCreateForm} disabled={isFormOpen || loading}>
                   <Plus size={16} aria-hidden="true" /> Agregar subtarea
                 </button>
@@ -367,7 +379,9 @@ export default function EventoDetalle() {
               {eventSubmitError && <div className="subtarea-submit-error" role="alert">{eventSubmitError}</div>}
               <div className="evento-edicion__acciones">
                 <button type="button" onClick={() => setIsEventEditOpen(false)} disabled={eventSaving}>Cancelar</button>
-                <button className="boton-guardado" type="submit" disabled={eventSaving}>{eventSaving ? 'Guardando...' : 'Guardar cambios'}</button>
+                <button className="boton-guardado" type="submit" disabled={eventSaving}>
+                  {eventSaving ? 'Guardando...' : eventSubmitError ? 'Reintentar' : 'Guardar cambios'}
+                </button>
               </div>
             </form>
           )}
@@ -380,7 +394,7 @@ export default function EventoDetalle() {
             onRetry={loadSubtasks}
             onAdd={openCreateForm}
             onEdit={openEditSubtask}
-            onDelete={handleDeleteSubtask}
+            onDelete={requestDeleteSubtask}
             deletingId={deletingId}
             isFormOpen={isFormOpen}
             isEditing={Boolean(editingSubtaskId)}
@@ -393,7 +407,26 @@ export default function EventoDetalle() {
             submitError={submitError}
           />
         </div>
+
+        <ConfirmDialog
+          open={eventDeleteOpen}
+          title="Eliminar evento"
+          message={`¿Seguro que deseas eliminar “${eventData.titulo}”? También se eliminarán sus subtareas. Esta acción no se puede deshacer.`}
+          loading={eventDeleting}
+          error={eventDeleteError}
+          onConfirm={confirmDeleteEvent}
+          onCancel={() => !eventDeleting && setEventDeleteOpen(false)}
+        />
+
+        <ConfirmDialog
+          open={Boolean(subtaskToDelete)}
+          title="Eliminar subtarea"
+          message={`¿Seguro que deseas eliminar “${subtaskToDelete?.gestion ?? ''}”? Esta acción no se puede deshacer.`}
+          loading={Boolean(deletingId)}
+          error={subtaskDeleteError}
+          onConfirm={confirmDeleteSubtask}
+          onCancel={() => !deletingId && setSubtaskToDelete(null)}
+        />
       </main>
-    </div>
   );
 }

@@ -145,6 +145,9 @@
   font-size: 11px;
   font-weight: 600;
 }
+.gestion-estado--ejecutada { color: #067647; background: #ecfdf3; }
+.gestion-estado--pospuesta { color: #475467; background: #f2f4f7; }
+.gestion-estado--pendiente { color: #b54708; background: #fff6ed; }
 
 .gestion-card__acciones {
   display: flex;
