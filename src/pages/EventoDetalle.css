@@ -1,0 +1,53 @@
+.detalle-principal {
+  width: 100%;
+  min-height: 100svh;
+  padding: clamp(16px, 4vw, 48px);
+  box-sizing: border-box;
+}
+
+.detalle-contenido { width: 100%; max-width: 960px; margin: 0 auto; }
+.detalle-volver {
+  display: inline-flex;
+  margin-bottom: 14px;
+  border: 0;
+  color: #4b5563;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
+.detalle-card {
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  color: #374151;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(31, 24, 55, 0.1);
+}
+
+.detalle-encabezado { padding: clamp(22px, 4vw, 34px); border-bottom: 1px solid #e5e7eb; }
+.detalle-encabezado h1 { margin: 0 0 8px; font-size: clamp(28px, 5vw, 42px); }
+.detalle-encabezado p { color: #6b7280; font-size: 15px; }
+
+.detalle-datos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 20px clamp(22px, 4vw, 34px);
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8faff;
+}
+
+.detalle-dato { min-width: 0; }
+.detalle-dato span { display: block; margin-bottom: 4px; color: #6b7280; font-size: 12px; }
+.detalle-dato strong { overflow-wrap: anywhere; color: #172033; font-size: 14px; font-weight: 600; }
+.detalle-plan { padding: 0 clamp(22px, 4vw, 34px) clamp(24px, 4vw, 34px); }
+.detalle-plan .plan-logistico { margin-top: 0; border-top: 0; }
+
+@media (max-width: 620px) {
+  .detalle-datos { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 420px) {
+  .detalle-datos { grid-template-columns: 1fr; }
+}

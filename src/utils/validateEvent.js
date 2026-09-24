@@ -1,4 +1,4 @@
-export function validateEvent({ titulo, tipo, fecha }) {
+export function validateEvent({ titulo, tipo, fecha, lugar, contacto }) {
   const errors = {};
 
   if (!titulo || !titulo.trim()) {
@@ -8,7 +8,12 @@ export function validateEvent({ titulo, tipo, fecha }) {
   if (!tipo) {
     errors.tipo = 'Selecciona el tipo de evento.';
   }
-
+   if (!lugar || !lugar.trim()) {
+    errors.lugar = 'El lugar del evento es obligatorio.';
+  }
+  if (!contacto || !String(contacto).trim()) {
+    errors.contacto = 'El contacto del evento es obligatorio.';
+  }
   if (!fecha) {
     errors.fecha = 'La fecha del evento es obligatoria.';
   } else {
