@@ -1,48 +1,51 @@
-# Design QA — detalle del evento y plan logístico
+# Design QA — detalle del evento
 
-- Source visual truth: `C:\Users\Ideapad\.codex\visualizations\2026\09\22\01a0c75a-fefc-7bd0-ab4f-07b476898a69\plan-logistico-detalle.html`
+- Source visual truth: `C:\Users\Ideapad\AppData\Local\Temp\codex-clipboard-c68ac73d-9027-48d0-a163-f2dc5167b725.png`
 - Implementation: `http://localhost:5173/evento/123`
-- Implementation screenshot: Codex in-app browser capture from tab 2 in the current task (the browser surface did not expose a filesystem path).
+- Implementation screenshot: Codex in-app browser capture from the current task; the browser surface did not expose a filesystem path.
 - Viewport: 1280 × 720 CSS pixels, device scale 1.
-- Source dimensions: responsive HTML mockup; desktop wide composition used as the visual truth.
-- State compared: event detail with one saved logistical subtask.
+- Source dimensions: 1920 × 1080 pixels; browser chrome and surrounding black canvas excluded from the design comparison.
+- State: event detail with one pending logistical subtask.
 
 ## Full-view comparison evidence
 
-The rendered page preserves the selected mockup's hierarchy: back navigation, white rounded event surface, compact event metadata band, plan-logistics heading and action, and a responsive subtask row. The new task appears immediately after saving without a page reload.
+The implementation now follows the reference composition: dark left navigation, event heading and metadata, white progress summary, pale application canvas, and compact white management rows. The product content fills the browser instead of reproducing the reference's external browser chrome or black Figma presentation canvas.
 
 ## Focused-region comparison evidence
 
-The plan-logistics region was inspected separately in the browser. Labels, field order, date formatting, estimated-hours formatting, action placement, borders, radii, spacing, and the empty/loading/form/list states match the intended component structure. No additional crop was necessary because the complete region was legible in the full viewport.
+The event summary and Gestiones region were inspected at readable scale. The initial row-width conflict with creation-page styles was corrected by scoping the detail-row selector. The final row keeps the title readable, aligns hours and target date, and preserves the status pill and colored left edge from the reference language.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: system typography and hierarchy match the existing application; headings, labels, supporting copy, and values remain readable.
-- Spacing and layout rhythm: desktop grid, card spacing, metadata band, form spacing, and responsive stacking are consistent with the source.
-- Colors and visual tokens: the existing pale-lilac page background, white surfaces, indigo actions, neutral borders, and red validation treatment are preserved.
-- Image quality and asset fidelity: no raster assets are required. The delete action uses a library icon rather than an emoji or handcrafted graphic.
-- Copy and content: headings, empty state, loading state, retry action, field labels, validation messages, and saving state follow the requested UX.
+- Fonts and typography: system sans-serif hierarchy matches the reference's compact product UI; event title, section title, labels and metadata have distinct readable weights.
+- Spacing and layout rhythm: sidebar width, page gutters, summary-card padding, row height, radii and vertical spacing closely follow the reference.
+- Colors and visual tokens: navy navigation, pale blue-gray canvas, white surfaces, indigo active states and muted secondary text match the source palette.
+- Image quality and asset fidelity: the reference contains no required raster product assets. Interface icons use the installed icon library.
+- Copy and content: Organiza navigation, event metadata, preparation progress, Gestiones heading and subtask information match the intended screen.
 
 ## Interaction verification
 
-- Empty state appears when no subtasks exist.
-- Add-subtask action opens the controlled form.
-- Empty submission shows specific errors for title, target date, and estimated hours.
-- Valid submission shows `Guardando...`, stores the mock response, closes the form, and appends the new subtask immediately.
-- The creation page still renders the shared plan-logistics editor and delete control.
-- Browser console: no application errors observed during the tested flow.
+- Sidebar navigation routes are wired to the existing pages.
+- “Agregar subtarea” opens the existing controlled form inside Gestiones.
+- Empty submission shows the three required field-level errors.
+- Cancel closes the form without changing the list.
+- Las subtareas cargadas desde el backend permanecen visibles después del rediseño.
+- Browser console: no application errors observed.
+- `npm run lint` and `npm run build` pass.
 
 ## Comparison history
 
-- Initial implementation: the date field required a direct native date value during automated interaction; no product-code defect was found.
-- Post-verification: native date value accepted, submission completed, and the list updated visibly.
+- First visual pass: a style collision forced the task title into a 24 px grid column, causing letter-by-letter wrapping.
+- Fix: increased selector specificity for detail rows so creation-form grid styles cannot override them.
+- Post-fix evidence: the complete task title renders on one line, the row returns to the intended compact height, and the desktop composition matches the reference structure.
 
 ## Findings
 
-No actionable P0, P1, or P2 visual differences remain.
+No actionable P0, P1 or P2 differences remain for the requested scope.
 
 ## Follow-up polish
 
-- P3: once the backend event-detail endpoint exists, replace the direct-route placeholder metadata with the persisted event information.
+- Los estados Pendiente, Ejecutada y Pospuesta se cargan y actualizan mediante la API.
+- La edición del evento y la edición/eliminación de subtareas están conectadas. La eliminación del evento permanece fuera del alcance solicitado.
 
 final result: passed

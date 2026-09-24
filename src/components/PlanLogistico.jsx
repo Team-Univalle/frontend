@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import './PlanLogistico.css';
 
 function CampoSubtarea({
@@ -7,6 +7,7 @@ function CampoSubtarea({
   disabled,
   onChange,
   idPrefix,
+  showStatus = false,
 }) {
   return (
     <>
@@ -66,6 +67,22 @@ function CampoSubtarea({
           </span>
         )}
       </div>
+
+      {showStatus && (
+        <div className="gestion-field gestion-field--estado">
+          <label htmlFor={`${idPrefix}-estado`}>Estado</label>
+          <select
+            id={`${idPrefix}-estado`}
+            value={item.estado}
+            onChange={(event) => onChange('estado', event.target.value)}
+            disabled={disabled}
+          >
+            <option value="Pendiente">Pendiente</option>
+            <option value="Ejecutada">Ejecutada</option>
+            <option value="Pospuesta">Pospuesta</option>
+          </select>
+        </div>
+      )}
     </>
   );
 }
@@ -84,10 +101,13 @@ export default function PlanLogistico({
   onAdd,
   onChange,
   onDelete,
+  onEdit,
+  deletingId,
   loading = false,
   loadError = '',
   onRetry,
   isFormOpen = false,
+  isEditing = false,
   draft,
   draftErrors = {},
   onDraftChange,
@@ -97,7 +117,7 @@ export default function PlanLogistico({
   submitError = '',
 }) {
   const isDetail = mode === 'detail';
-  const title = isDetail ? 'Plan logístico' : 'Plan logístico inicial';
+  const title = isDetail ? 'Gestiones' : 'Plan logístico inicial';
   const description = isDetail
     ? 'Subtareas asociadas a este evento.'
     : 'Añade subtareas con fecha objetivo y esfuerzo mayor que cero.';
@@ -107,9 +127,18 @@ export default function PlanLogistico({
       <div className="plan-logistico__header">
         <div>
           <h2 id="plan-logistico-title">{title}</h2>
-          <p>{description}</p>
+          {!isDetail && <p>{description}</p>}
         </div>
-      
+        {!isDetail && (
+          <button
+            className="boton-adicional"
+            type="button"
+            onClick={onAdd}
+            disabled={disabled}
+          >
+            + Añadir gestión
+          </button>
+        )}
       </div>
 
       {isDetail && loading && (
@@ -130,7 +159,7 @@ export default function PlanLogistico({
       {isDetail && !loading && !loadError && isFormOpen && draft && (
         <form className="gestion-card gestion-card--nueva" onSubmit={onSubmit} noValidate>
           <span className="gestion-card__numero" aria-hidden="true">
-            +
+            {isEditing ? <Pencil size={15} /> : '+'}
           </span>
           <CampoSubtarea
             item={draft}
@@ -138,6 +167,7 @@ export default function PlanLogistico({
             disabled={saving}
             onChange={onDraftChange}
             idPrefix="nueva-subtarea"
+            showStatus={isEditing}
           />
           {submitError && (
             <div className="subtarea-submit-error" role="alert">
@@ -149,7 +179,7 @@ export default function PlanLogistico({
               Cancelar
             </button>
             <button className="boton-guardado" type="submit" disabled={saving}>
-              {saving ? 'Guardando...' : 'Guardar subtarea'}
+              {saving ? 'Guardando...' : isEditing ? 'Guardar cambios' : 'Guardar subtarea'}
             </button>
           </div>
         </form>
@@ -169,20 +199,22 @@ export default function PlanLogistico({
           {items.map((item, index) =>
             isDetail ? (
               <article className="gestion-card gestion-card--lectura" key={item.id}>
-                <span className="gestion-card__numero" aria-hidden="true">
-                  {index + 1}
-                </span>
                 <div className="gestion-resumen gestion-resumen--titulo">
-                  <span>Título</span>
                   <strong>{item.gestion}</strong>
+                  <span>{item.estado || 'Pendiente'}</span>
                 </div>
-                <div className="gestion-resumen">
-                  <span>Fecha objetivo</span>
-                  <strong>{formatDate(item.fechaObjetivo)}</strong>
+                <div className="gestion-resumen gestion-resumen--tiempo">
+                  <strong className="gestion-horas">{item.horasEstimadas} h</strong>
+                  <span>{formatDate(item.fechaObjetivo)}</span>
                 </div>
-                <div className="gestion-resumen">
-                  <span>Horas estimadas</span>
-                  <strong>{item.horasEstimadas} h</strong>
+                <span className="gestion-estado">Próxima</span>
+                <div className="gestion-card__acciones">
+                  <button type="button" onClick={() => onEdit(item)} disabled={deletingId === item.id}>
+                    <Pencil size={15} aria-hidden="true" /> Editar
+                  </button>
+                  <button className="gestion-card__eliminar" type="button" onClick={() => onDelete(item)} disabled={deletingId === item.id} aria-label={`Eliminar ${item.gestion}`}>
+                    <Trash2 size={16} aria-hidden="true" />
+                  </button>
                 </div>
               </article>
             ) : (
