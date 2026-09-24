@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../services/eventsService';
 import { validateEvent } from '../utils/validateEvent';
 import Toast from '../components/Toast';
+import PlanLogistico from '../components/PlanLogistico';
 import '../components/Toast.css';
 import './Crear.css';
 
@@ -24,7 +25,7 @@ export default function Crear() {
     fecha: '',
     hora: '',
     limite: '',
-    Lugar: '',
+    lugar: '',
   });
   const [logisticsItems, setLogisticsItems] = useState([
     { id: 1, gestion: '', fechaObjetivo: '', horasEstimadas: '' },
@@ -126,7 +127,7 @@ export default function Crear() {
 
       setToast({ message: 'Evento creado exitosamente', type: 'success' });
       setTimeout(() => {
-        navigate(`/evento/${evento.id}`);
+        navigate(`/evento/${evento.id}`, { state: { event: evento } });
       }, 800);
     } catch {
       setStatus('idle');
@@ -197,7 +198,8 @@ export default function Crear() {
               <input
                 id="contacto"
                 name="contacto"
-                type="text"
+                type="number"
+                max="11"
                 value={form.contacto}
                 onChange={handleChange}
                 aria-invalid={!!fieldErrors.contacto}
@@ -214,20 +216,20 @@ export default function Crear() {
             </div>
 
             <div className="field field--lugar">
-              <label htmlFor="Lugar">Lugar</label>
+              <label htmlFor="lugar">Lugar</label>
               <input
-                id="Lugar"
-                name="Lugar"
+                id="lugar"
+                name="lugar"
                 type="text"
-                value={form.Lugar}
+                value={form.lugar}
                 onChange={handleChange}
-                aria-invalid={!!fieldErrors.Lugar}
-                aria-describedby={fieldErrors.Lugar ? 'Lugar-error' : undefined}
+                aria-invalid={!!fieldErrors.lugar}
+                aria-describedby={fieldErrors.lugar ? 'lugar-error' : undefined}
                 disabled={status === 'loading'}
               />
-              {fieldErrors.Lugar && (
-                <span id="Lugar-error" className="field-error">
-                  {fieldErrors.Lugar}
+              {fieldErrors.lugar && (
+                <span id="lugar-error" className="field-error">
+                  {fieldErrors.lugar}
                 </span>
               )}
             </div>
@@ -300,128 +302,14 @@ export default function Crear() {
             </div>
           )}
 
-          <section
-            className="plan-logistico"
-            aria-labelledby="plan-logistico-title"
-          >
-            <div className="plan-logistico__header">
-              <div>
-                <h2 id="plan-logistico-title">Plan logístico inicial</h2>
-                <p>
-                  Añade subtareas con fecha objetivo y esfuerzo mayor que cero.
-                </p>
-              </div>
-              <button
-                className="boton-adicional"
-                type="button"
-                onClick={addLogisticsItem}
-                disabled={status === 'loading'}
-              >
-                + Añadir gestión
-              </button>
-            </div>
-
-            <div className="plan-logistico__lista">
-              {logisticsItems.map((item, index) => (
-                <div className="gestion-card" key={item.id}>
-                  <span className="gestion-card__numero" aria-hidden="true">
-                    {index + 1}
-                  </span>
-
-                  <div className="gestion-field gestion-field--nombre">
-                    <label htmlFor={`gestion-${item.id}`}>Gestión</label>
-                    <input
-                      id={`gestion-${item.id}`}
-                      type="text"
-                      value={item.gestion}
-                      onChange={(e) =>
-                        handleLogisticsChange(
-                          item.id,
-                          'gestion',
-                          e.target.value
-                        )
-                      }
-                      aria-invalid={!!logisticsErrors[`${item.id}-gestion`]}
-                      disabled={status === 'loading'}
-                    />
-                    {logisticsErrors[`${item.id}-gestion`] && (
-                      <span className="field-error">
-                        {logisticsErrors[`${item.id}-gestion`]}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="gestion-field">
-                    <label htmlFor={`fecha-objetivo-${item.id}`}>
-                      Fecha objetivo
-                    </label>
-                    <input
-                      id={`fecha-objetivo-${item.id}`}
-                      type="date"
-                      value={item.fechaObjetivo}
-                      onChange={(e) =>
-                        handleLogisticsChange(
-                          item.id,
-                          'fechaObjetivo',
-                          e.target.value
-                        )
-                      }
-                      aria-invalid={
-                        !!logisticsErrors[`${item.id}-fechaObjetivo`]
-                      }
-                      disabled={status === 'loading'}
-                    />
-                    {logisticsErrors[`${item.id}-fechaObjetivo`] && (
-                      <span className="field-error">
-                        {logisticsErrors[`${item.id}-fechaObjetivo`]}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="gestion-field gestion-field--horas">
-                    <label htmlFor={`horas-estimadas-${item.id}`}>
-                      Horas estimadas
-                    </label>
-                    <input
-                      id={`horas-estimadas-${item.id}`}
-                      type="number"
-                      min="0"
-                      step="0.25"
-                      placeholder="Ej. 1.5"
-                      value={item.horasEstimadas}
-                      onChange={(e) =>
-                        handleLogisticsChange(
-                          item.id,
-                          'horasEstimadas',
-                          e.target.value
-                        )
-                      }
-                      aria-invalid={
-                        !!logisticsErrors[`${item.id}-horasEstimadas`]
-                      }
-                      disabled={status === 'loading'}
-                    />
-                    {logisticsErrors[`${item.id}-horasEstimadas`] && (
-                      <span className="field-error">
-                        {logisticsErrors[`${item.id}-horasEstimadas`]}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    className="boton-eliminar-gestion"
-                    type="button"
-                    onClick={() => quitLogisticsItem(item.id)}
-                    disabled={status === 'loading'}
-                    aria-label={`Eliminar gestión ${index + 1}`}
-                    title="Eliminar gestión"
-                  >
-                    <span aria-hidden="true">🗑</span>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
+          <PlanLogistico
+            items={logisticsItems}
+            errors={logisticsErrors}
+            disabled={status === 'loading'}
+            onAdd={addLogisticsItem}
+            onChange={handleLogisticsChange}
+            onDelete={quitLogisticsItem}
+          />
 
           <div className="form-actions">
             <button

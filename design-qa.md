@@ -1,48 +1,48 @@
-# Design QA — Formulario de evento y plan logístico
+# Design QA — detalle del evento y plan logístico
 
-- Source visual truth: `C:\Users\Ideapad\AppData\Local\Temp\codex-clipboard-17f84c22-516b-4ef0-99b7-e7fdf5739b94.png`
-- Implementation: `http://127.0.0.1:5173/crear`
-- Implementation screenshot: inline browser capture from Codex in-app Browser, tab 2
-- Source pixels: 700 × 447
-- Implementation viewports: 700 × 700 and 480 × 700 CSS px, device scale factor 1
-- State: empty event form with one empty logistics row
-- Density normalization: the form content was compared at the 700 px reference width; the 480 px capture was used to verify responsive collapse
+- Source visual truth: `C:\Users\Ideapad\.codex\visualizations\2026\09\22\01a0c75a-fefc-7bd0-ab4f-07b476898a69\plan-logistico-detalle.html`
+- Implementation: `http://localhost:5173/evento/123`
+- Implementation screenshot: Codex in-app browser capture from tab 2 in the current task (the browser surface did not expose a filesystem path).
+- Viewport: 1280 × 720 CSS pixels, device scale 1.
+- Source dimensions: responsive HTML mockup; desktop wide composition used as the visual truth.
+- State compared: event detail with one saved logistical subtask.
 
 ## Full-view comparison evidence
 
-The implementation follows the reference hierarchy inside one white card. At 700 px, event name/type and contact/location share paired rows; date/time share a compact row and daily limit occupies the next available compact column. The logistics plan remains after the horizontal divider. At 480 px, all fields collapse to one column with no horizontal overflow.
+The rendered page preserves the selected mockup's hierarchy: back navigation, white rounded event surface, compact event metadata band, plan-logistics heading and action, and a responsive subtask row. The new task appears immediately after saving without a page reload.
 
-## Focused region comparison evidence
+## Focused-region comparison evidence
 
-A focused capture of the event-data grid was required because the source uses compact field labels and mixed column spans. The 700 px capture confirmed paired main fields and compact date/time/limit sizing. The 480 px capture confirmed a single-column layout and a document scroll width equal to the viewport client width.
+The plan-logistics region was inspected separately in the browser. Labels, field order, date formatting, estimated-hours formatting, action placement, borders, radii, spacing, and the empty/loading/form/list states match the intended component structure. No additional crop was necessary because the complete region was legible in the full viewport.
 
-## Findings
+## Required fidelity surfaces
 
-- No actionable P0, P1, or P2 differences remain in the requested form layout.
-- Typography: system sans-serif, weights, hierarchy, and small-field labels are consistent with the reference.
-- Spacing and layout: four base tracks reproduce the reference proportions, switch to two tracks at 700 px, and collapse to one track below 520 px without overflow.
-- Colors and tokens: white surface, cool-gray row background, blue numbering/action, and semantic red error state match the reference closely.
-- Image quality: the reference contains no raster imagery, logos, illustrations, or custom icons requiring assets.
-- Copy: title, helper text, field labels, and error copy match the reference intent.
+- Fonts and typography: system typography and hierarchy match the existing application; headings, labels, supporting copy, and values remain readable.
+- Spacing and layout rhythm: desktop grid, card spacing, metadata band, form spacing, and responsive stacking are consistent with the source.
+- Colors and visual tokens: the existing pale-lilac page background, white surfaces, indigo actions, neutral borders, and red validation treatment are preserved.
+- Image quality and asset fidelity: no raster assets are required. The delete action uses a library icon rather than an emoji or handcrafted graphic.
+- Copy and content: headings, empty state, loading state, retry action, field labels, validation messages, and saving state follow the requested UX.
 
 ## Interaction verification
 
-- Adding a second management row works.
-- Management, target date, and estimated-hours inputs update independently.
-- Empty required logistics fields display errors.
-- Estimated hours equal to or below zero display `Debe ser mayor que 0`.
-- Each logistics row exposes an accessible delete button that removes only that row.
-- Responsive checks passed at 700 px and 480 px.
-- Build and lint pass.
-- Browser console errors checked: none.
+- Empty state appears when no subtasks exist.
+- Add-subtask action opens the controlled form.
+- Empty submission shows specific errors for title, target date, and estimated hours.
+- Valid submission shows `Guardando...`, stores the mock response, closes the form, and appends the new subtask immediately.
+- The creation page still renders the shared plan-logistics editor and delete control.
+- Browser console: no application errors observed during the tested flow.
 
 ## Comparison history
 
-- Pass 1: the first rendered comparison contained the requested section structure and no P0/P1/P2 visual mismatch. No post-comparison visual repair was required.
-- Pass 2: the event-data fields were separated into responsive grid items; post-fix captures confirmed the reference-like two-column composition and mobile single-column collapse.
+- Initial implementation: the date field required a direct native date value during automated interaction; no product-code defect was found.
+- Post-verification: native date value accepted, submission completed, and the list updated visibly.
+
+## Findings
+
+No actionable P0, P1, or P2 visual differences remain.
 
 ## Follow-up polish
 
-- No remaining P3 issue blocks this layout iteration.
+- P3: once the backend event-detail endpoint exists, replace the direct-route placeholder metadata with the persisted event information.
 
 final result: passed

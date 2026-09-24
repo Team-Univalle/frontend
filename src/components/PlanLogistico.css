@@ -1,0 +1,185 @@
+.plan-logistico {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.plan-logistico__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.plan-logistico__header h2 {
+  margin: 0 0 6px;
+  color: #172033;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.plan-logistico__header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.plan-logistico__header .boton-adicional {
+  flex: 0 0 auto;
+  margin-right: 0;
+}
+
+.plan-logistico__lista {
+  display: grid;
+  gap: 14px;
+}
+
+.gestion-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px minmax(220px, 2fr) minmax(160px, 1.15fr) minmax(130px, 0.8fr);
+  gap: 14px;
+  align-items: start;
+  padding: 14px 58px 14px 14px;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background-color: #f8faff;
+}
+
+.gestion-card--nueva {
+  margin-bottom: 14px;
+  border-color: #a7b4f4;
+  background: #f2f4ff;
+}
+
+.gestion-card--lectura {
+  grid-template-columns: 24px minmax(220px, 2fr) minmax(160px, 1.15fr) minmax(130px, 0.8fr);
+  padding-right: 14px;
+}
+
+.gestion-card__numero {
+  padding-top: 26px;
+  color: #4f46e5;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.gestion-field,
+.gestion-resumen {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gestion-field label,
+.gestion-resumen span {
+  color: #374151;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gestion-field input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #374151;
+  background-color: #fff;
+  font: inherit;
+}
+
+.gestion-field input[aria-invalid='true'] {
+  border-color: #dc2626;
+}
+
+.gestion-field .field-error {
+  margin-top: 0;
+  color: #dc2626;
+  font-size: 11px;
+}
+
+.gestion-resumen {
+  padding-block: 5px;
+}
+
+.gestion-resumen strong {
+  overflow-wrap: anywhere;
+  color: #172033;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.boton-eliminar-gestion {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  place-items: center;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.boton-eliminar-gestion:hover { background-color: #fee2e2; }
+.boton-eliminar-gestion:focus-visible { outline: 2px solid #dc2626; outline-offset: 2px; }
+.boton-eliminar-gestion:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.plan-logistico__estado {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 30px 18px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.plan-logistico__estado p { margin: 0; font-size: 14px; font-weight: 400; }
+.plan-logistico__estado button,
+.subtarea-actions button {
+  min-height: 40px;
+  padding: 9px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #172033;
+  cursor: pointer;
+}
+.plan-logistico__estado--error { border-color: #fecaca; color: #b91c1c; background: #fff7f7; }
+
+.subtarea-actions {
+  grid-column: 2 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.subtarea-actions .boton-guardado { border-color: #4f46e5; color: #fff; background: #4f46e5; }
+.subtarea-submit-error { grid-column: 2 / -1; color: #b91c1c; font-size: 13px; }
+
+@media (max-width: 760px) {
+  .plan-logistico__header { align-items: stretch; flex-direction: column; }
+  .plan-logistico__header .boton-adicional { width: 100%; }
+  .gestion-card,
+  .gestion-card--lectura { grid-template-columns: 24px minmax(0, 1fr); padding-right: 54px; }
+  .gestion-card--lectura { padding-right: 14px; }
+  .gestion-field,
+  .gestion-resumen { grid-column: 2; }
+  .subtarea-actions,
+  .subtarea-submit-error { grid-column: 2; flex-direction: column-reverse; }
+  .subtarea-actions button { width: 100%; }
+}
