@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createEvent } from '../services/eventsService';
+import { createEvent, mapEventFieldErrors } from '../services/eventsService';
+import { createSubtask } from '../services/subtasksService';
 import { validateEvent } from '../utils/validateEvent';
 import Toast from '../components/Toast';
 import PlanLogistico from '../components/PlanLogistico';
@@ -102,38 +103,49 @@ export default function Crear() {
     setLogisticsErrors({});
     setStatus('loading');
 
+    let evento;
     try {
-      const evento = await createEvent({
-        ...form,
-        planLogistico: logisticsItems.map((item) => ({
-          gestion: item.gestion,
-          fechaObjetivo: item.fechaObjetivo,
-          horasEstimadas: Number(item.horasEstimadas),
-        })),
-      });
-      setStatus('idle');
+      evento = await createEvent(form);
 
       if (!evento?.id) {
-        // El backend respondió, pero sin el id esperado — no podemos redirigir con seguridad
-        setGeneralError(
-          'El evento se creó, pero no se pudo confirmar su identificador.'
-        );
-        setToast({
-          message: 'Evento creado, pero hubo un problema al redirigir.',
-          type: 'error',
-        });
-        return;
+        throw new Error('El evento se creó, pero no se pudo confirmar su identificador.');
       }
+
+      await Promise.all(
+        logisticsItems.map((item) =>
+          createSubtask(evento.id, {
+            gestion: item.gestion,
+            fechaObjetivo: item.fechaObjetivo,
+            horasEstimadas: Number(item.horasEstimadas),
+          })
+        )
+      );
+      setStatus('idle');
 
       setToast({ message: 'Evento creado exitosamente', type: 'success' });
       setTimeout(() => {
         navigate(`/evento/${evento.id}`, { state: { event: evento } });
       }, 800);
-    } catch {
+    } catch (error) {
       setStatus('idle');
-      const mensaje = 'No se pudo crear el evento. Intenta de nuevo.';
+      const backendFields = error?.data?.fields;
+      if (!evento && backendFields) {
+        setFieldErrors(mapEventFieldErrors(backendFields));
+      }
+
+      const mensaje = evento
+        ? 'El evento se creó, pero alguna subtarea no pudo guardarse.'
+        : error?.message || 'No se pudo crear el evento. Intenta de nuevo.';
       setGeneralError(mensaje);
       setToast({ message: mensaje, type: 'error' });
+
+      if (evento?.id) {
+        setTimeout(() => {
+          navigate(`/evento/${evento.id}`, {
+            state: { event: evento, warning: mensaje },
+          });
+        }, 1200);
+      }
     }
   }
 
@@ -198,8 +210,9 @@ export default function Crear() {
               <input
                 id="contacto"
                 name="contacto"
-                type="number"
-                max="11"
+                type="tel"
+                inputMode="tel"
+                maxLength="150"
                 value={form.contacto}
                 onChange={handleChange}
                 aria-invalid={!!fieldErrors.contacto}
@@ -315,6 +328,7 @@ export default function Crear() {
             <button
               className="boton-cancelar"
               type="button"
+              onClick={() => navigate('/hoy')}
               disabled={status === 'loading'}
             >
               Cancelar
@@ -324,7 +338,11 @@ export default function Crear() {
               type="submit"
               disabled={status === 'loading'}
             >
-              {status === 'loading' ? 'Guardando...' : 'Guardar evento'}
+              {status === 'loading'
+                ? 'Guardando...'
+                : generalError
+                  ? 'Reintentar'
+                  : 'Guardar evento'}
             </button>
           </div>
         </form>

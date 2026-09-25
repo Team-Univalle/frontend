@@ -1,61 +1,59 @@
 import apiClient from './apiClient';
 
-const hasBackend = Boolean(import.meta.env.VITE_API_URL?.trim());
-const storageKey = (eventId) => `event-${eventId}-subtasks`;
+const SUBTASK_FIELD_MAP = {
+  name: 'gestion',
+  target_date: 'fechaObjetivo',
+  estimated_hours: 'horasEstimadas',
+  status: 'estado',
+};
 
-function wait(milliseconds = 350) {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds));
-}
-
-function readMockSubtasks(eventId) {
-  const stored = localStorage.getItem(storageKey(eventId));
-  return stored ? JSON.parse(stored) : [];
-}
-
-function saveMockSubtasks(eventId, subtasks) {
-  localStorage.setItem(storageKey(eventId), JSON.stringify(subtasks));
-}
-
-function normalizeSubtask(subtask) {
+export function normalizeSubtask(subtask) {
   return {
     ...subtask,
-    gestion: subtask.gestion ?? subtask.titulo ?? '',
+    gestion: subtask.name ?? '',
+    fechaObjetivo: subtask.target_date ?? '',
+    horasEstimadas: Number(subtask.estimated_hours),
+    estado: subtask.status ?? 'Pendiente',
   };
+}
+
+function toSubtaskPayload(subtaskData) {
+  return {
+    name: subtaskData.gestion.trim(),
+    target_date: subtaskData.fechaObjetivo,
+    estimated_hours: Number(subtaskData.horasEstimadas),
+    ...(subtaskData.estado ? { status: subtaskData.estado } : {}),
+  };
+}
+
+export function mapSubtaskFieldErrors(fields = {}) {
+  return Object.fromEntries(
+    Object.entries(fields).map(([field, message]) => [SUBTASK_FIELD_MAP[field] ?? field, message])
+  );
 }
 
 export async function getSubtasks(eventId) {
-  if (hasBackend) {
-    const response = await apiClient(`/events/${eventId}/subtasks`);
-    if (Array.isArray(response)) return response.map(normalizeSubtask);
-    if (Array.isArray(response?.results)) {
-      return { ...response, results: response.results.map(normalizeSubtask) };
-    }
-    return response;
-  }
-
-  await wait();
-  return readMockSubtasks(eventId);
+  const response = await apiClient(`/events/${eventId}/subtasks`);
+  if (Array.isArray(response)) return response.map(normalizeSubtask);
+  return { ...response, results: (response?.results ?? []).map(normalizeSubtask) };
 }
 
 export async function createSubtask(eventId, subtaskData) {
-  if (hasBackend) {
-    const response = await apiClient(`/events/${eventId}/subtasks`, {
-      method: 'POST',
-      body: JSON.stringify({
-        titulo: subtaskData.gestion,
-        fechaObjetivo: subtaskData.fechaObjetivo,
-        horasEstimadas: subtaskData.horasEstimadas,
-      }),
-    });
-    return normalizeSubtask(response);
-  }
+  const response = await apiClient(`/events/${eventId}/subtasks`, {
+    method: 'POST',
+    body: JSON.stringify(toSubtaskPayload(subtaskData)),
+  });
+  return normalizeSubtask(response);
+}
 
-  await wait();
-  const subtasks = readMockSubtasks(eventId);
-  const createdSubtask = {
-    id: globalThis.crypto?.randomUUID?.() ?? Date.now(),
-    ...subtaskData,
-  };
-  saveMockSubtasks(eventId, [...subtasks, createdSubtask]);
-  return createdSubtask;
+export async function updateSubtask(subtaskId, subtaskData) {
+  const response = await apiClient(`/subtasks/${subtaskId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(toSubtaskPayload(subtaskData)),
+  });
+  return normalizeSubtask(response);
+}
+
+export async function deleteSubtask(subtaskId) {
+  await apiClient(`/subtasks/${subtaskId}`, { method: 'DELETE' });
 }

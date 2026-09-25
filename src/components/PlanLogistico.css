@@ -51,14 +51,20 @@
 }
 
 .gestion-card--nueva {
+  grid-template-columns: 24px minmax(220px, 2fr) minmax(160px, 1.15fr) minmax(130px, .8fr) minmax(120px, .7fr);
   margin-bottom: 14px;
   border-color: #a7b4f4;
   background: #f2f4ff;
 }
 
-.gestion-card--lectura {
-  grid-template-columns: 24px minmax(220px, 2fr) minmax(160px, 1.15fr) minmax(130px, 0.8fr);
-  padding-right: 14px;
+.gestion-card.gestion-card--lectura {
+  grid-template-columns: minmax(220px, 2fr) minmax(150px, .8fr) minmax(90px, .5fr) auto;
+  align-items: center;
+  min-height: 76px;
+  padding: 13px 20px;
+  border-left: 3px solid #5b4df0;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .gestion-card__numero {
@@ -84,7 +90,8 @@
   font-weight: 600;
 }
 
-.gestion-field input {
+.gestion-field input,
+.gestion-field select {
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;
@@ -95,6 +102,8 @@
   background-color: #fff;
   font: inherit;
 }
+
+.gestion-field select { cursor: pointer; }
 
 .gestion-field input[aria-invalid='true'] {
   border-color: #dc2626;
@@ -116,6 +125,53 @@
   font-size: 14px;
   font-weight: 500;
 }
+
+.gestion-resumen--titulo span { color: #7a8395; font-size: 11px; font-weight: 400; }
+.gestion-resumen--tiempo { align-items: flex-start; }
+.gestion-horas {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #4f46e5 !important;
+  background: #eef0ff;
+  font-size: 11px !important;
+}
+.gestion-estado {
+  justify-self: start;
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: #4f46e5;
+  background: #eef0ff;
+  font-size: 11px;
+  font-weight: 600;
+}
+.gestion-estado--ejecutada { color: #067647; background: #ecfdf3; }
+.gestion-estado--pospuesta { color: #475467; background: #f2f4f7; }
+.gestion-estado--pendiente { color: #b54708; background: #fff6ed; }
+
+.gestion-card__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.gestion-card__acciones button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid #dbe2ee;
+  border-radius: 8px;
+  color: #334155;
+  background: #fff;
+  cursor: pointer;
+}
+
+.gestion-card__acciones button:hover { background: #f4f6fb; }
+.gestion-card__acciones .gestion-card__eliminar { padding-inline: 9px; color: #b91c1c; border-color: #fecaca; }
+.gestion-card__acciones button:disabled { cursor: wait; opacity: .55; }
 
 .boton-eliminar-gestion {
   position: absolute;
@@ -175,10 +231,15 @@
   .plan-logistico__header { align-items: stretch; flex-direction: column; }
   .plan-logistico__header .boton-adicional { width: 100%; }
   .gestion-card,
+  .gestion-card--nueva,
   .gestion-card--lectura { grid-template-columns: 24px minmax(0, 1fr); padding-right: 54px; }
-  .gestion-card--lectura { padding-right: 14px; }
+  .gestion-card.gestion-card--lectura { grid-template-columns: minmax(0, 1fr) auto; padding: 15px; }
   .gestion-field,
   .gestion-resumen { grid-column: 2; }
+  .gestion-card--lectura .gestion-resumen { grid-column: auto; }
+  .gestion-card--lectura .gestion-resumen--titulo { grid-column: 1 / -1; }
+  .gestion-card--lectura .gestion-estado { justify-self: end; }
+  .gestion-card--lectura .gestion-card__acciones { grid-column: 1 / -1; justify-content: flex-end; }
   .subtarea-actions,
   .subtarea-submit-error { grid-column: 2; flex-direction: column-reverse; }
   .subtarea-actions button { width: 100%; }
