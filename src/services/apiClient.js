@@ -13,11 +13,16 @@ async function apiClient(endpoint, options = {}) {
   const { headers, ...requestOptions } = options;
   let response;
 
+  // Recuperamos el token almacenado al iniciar sesión
+  const token = localStorage.getItem('token');
+
   try {
     response = await fetch(`${BASE_URL}${endpoint}`, {
       ...requestOptions,
       headers: {
         'Content-Type': 'application/json',
+        // Si el token existe, lo inyectamos automáticamente en el header Authorization
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...headers,
       },
     });
@@ -33,6 +38,12 @@ async function apiClient(endpoint, options = {}) {
       : await response.text();
 
   if (!response.ok) {
+    // Si el backend responde con 401 (No autorizado) o 403, podríamos limpiar la sesión opcionalmente
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      // Opcional: window.location.href = '/login';
+    }
+
     const message = typeof data === 'object' && data?.error
       ? data.error
       : `Error en la petición: ${response.status}`;
