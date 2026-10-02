@@ -7,43 +7,96 @@ export default function Hoy() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const cargarDatosHoy = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const resultado = await getHoyData();
+      setData(resultado);
+    } catch (err) {
+      console.error('Error al cargar la vista Hoy:', err);
+      setError('No pudimos conectar con el servidor para obtener tus prioridades de hoy.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function cargarDatosHoy() {
-      try {
-        const resultado = await getHoyData();
-        setData(resultado);
-      } catch (error) {
-        console.error('Error al cargar la vista Hoy:', error);
-      } finally {
-        setLoading(false);
-      }
-    }
     cargarDatosHoy();
   }, []);
 
+  // C4: ESTADO DE CARGA
   if (loading) {
-    return <div className="hoy-principal"><p>Cargando prioridades...</p></div>;
+    return (
+      <main className="hoy-principal">
+        <div className="estado-carga-container" style={{ textAlign: 'center', padding: '60px' }}>
+          <div className="spinner" style={{ fontSize: '24px', marginBottom: '12px' }}>⏳</div>
+          <p>Cargando tus prioridades del día...</p>
+        </div>
+      </main>
+    );
   }
 
-  // Extraemos directamente de la estructura que devuelve el backend (/today)
+  // C4: ESTADO DE ERROR (Alineado con la paleta de colores y estilo general)
+  if (error) {
+    return (
+      <main className="hoy-principal">
+        <div style={{ 
+          textAlign: 'center', 
+          padding: '60px 20px', 
+          background: '#ffffff', 
+          borderRadius: '12px', 
+          border: '1px solid #e2e8f0', 
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+          maxWidth: '600px',
+          margin: '40px auto'
+        }}>
+          <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚠️</div>
+          <h3 style={{ color: '#1e293b', marginBottom: '8px', fontSize: '18px', fontWeight: '600' }}>
+            ¡Ocurrió un error inesperado!
+          </h3>
+          <p style={{ color: '#64748b', marginBottom: '24px', fontSize: '14px' }}>
+            {error}
+          </p>
+          <button 
+            onClick={cargarDatosHoy}
+            style={{ 
+              background: '#6366f1', 
+              color: '#fff', 
+              border: 'none', 
+              padding: '10px 24px', 
+              borderRadius: '8px', 
+              cursor: 'pointer', 
+              fontWeight: '500',
+              fontSize: '14px',
+              transition: 'background 0.2s'
+            }}
+            onMouseOver={(e) => e.target.style.background = '#4f46e5'}
+            onMouseOut={(e) => e.target.style.background = '#6366f1'}
+          >
+            Reintentar
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   const vencidas = data?.vencidas || [];
   const paraHoy = data?.hoy || [];
   const proximas = data?.proximas || [];
 
-  // Comprobamos si no hay tareas en ninguna de las secciones
   const noHayTareas = vencidas.length === 0 && paraHoy.length === 0 && proximas.length === 0;
-
-  // Calculamos el total de tareas que requieren atención
   const totalTareasAtencion = data?.capacidad?.tareasAtencion || paraHoy.length;
 
   return (
     <main className="hoy-principal">
-      {/* Cabecera (Ya sin el badge de usuario) */}
+      {/* Cabecera */}
       <div className="hoy-header-container">
         <div className="hoy-titulo-area">
           <h1>Hoy</h1>
-          <br></br>
+          <br />
           <p>{data?.fechaTexto || new Date().toLocaleDateString()}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -77,27 +130,30 @@ export default function Hoy() {
         </div>
       </section>
 
-      {/* Filtros */}
-      <div className="filtros-container">
+      {/* Filtros y Regla de orden visible y justificada */}
+      <div className="filtros-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div className="filtros-grupo">
           <button className="filtro-pill active">Todos los eventos</button>
           <button className="filtro-pill">Estado: Todos</button>
           <button className="filtro-pill filtro-limpiar">Limpiar filtros</button>
         </div>
-        <span className="regla-texto">Regla: vencidas &rarr; hoy &rarr; próximas; empate = menor esfuerzo</span>
+        
+        <div className="regla-banner" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '10px 14px', borderRadius: '8px', maxWidth: '380px', fontSize: '12px', color: '#475569', textAlign: 'justify' }}>
+          <strong>Criterio de orden:</strong> Las gestiones urgentes y vencidas se atienden primero. Luego las programadas para hoy y finalmente las próximas. En caso de empate en fecha, se priorizan las de menor esfuerzo.
+        </div>
       </div>
 
-      {/* Estado Vacío (Se muestra si no hay tareas) */}
+      {/* C4: ESTADO VACÍO (Sin duplicar el botón de crear evento) */}
       {noHayTareas ? (
-        <div className="estado-vacio">
-          <div className="estado-vacio-icono">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="estado-vacio" style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '12px', border: '1px dashed #cbd5e1', marginTop: '20px' }}>
+          <div className="estado-vacio-icono" style={{ marginBottom: '12px', color: '#6366f1' }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           </div>
-          <h3>¡Todo al día!</h3>
-          <p>No tienes tareas pendientes programadas para hoy.</p>
+          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>¡Todo al día! No hay pendientes</h3>
+          <p style={{ color: '#64748b' }}>No tienes tareas programadas para hoy. Utiliza el botón superior para crear nuevos eventos.</p>
         </div>
       ) : (
         <>
