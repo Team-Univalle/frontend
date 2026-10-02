@@ -10,27 +10,31 @@ export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [generalError, setGeneralError] = useState('');
   const [toast, setToast] = useState(null);
 
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    if (error) setError('');
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+    if (generalError) setGeneralError('');
   }
 
   function toggleMode() {
     setIsRegistering((prev) => !prev);
-    setError('');
+    setFieldErrors({});
+    setGeneralError('');
     setForm({ name: '', email: '', password: '' });
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.email || !form.password || (isRegistering && !form.name)) {
-      setError('Por favor completa todos los campos.');
-      return;
-    }
+    setFieldErrors({});
+    setGeneralError('');
 
     setLoading(true);
     try {
@@ -56,8 +60,28 @@ export default function Login() {
         navigate('/today');
       }, 800);
     } catch (err) {
-      const mensajeError = err?.data?.error || err?.message || (isRegistering ? 'Error al registrarse.' : 'Credenciales incorrectas.');
-      setError(mensajeError);
+      const errorData = err?.data;
+
+      // Adaptado a tu estructura de backend: { error: "...", fields: { email: "..." } }
+      if (errorData && typeof errorData === 'object') {
+        if (errorData.fields && typeof errorData.fields === 'object') {
+          const newFieldErrors = {};
+          Object.keys(errorData.fields).forEach((key) => {
+            const msg = errorData.fields[key];
+            newFieldErrors[key] = Array.isArray(msg) ? msg.join(' ') : msg;
+          });
+          setFieldErrors(newFieldErrors);
+        }
+
+        if (errorData.error) {
+          setGeneralError(errorData.error);
+        } else {
+          setGeneralError('Por favor revisa los campos marcados.');
+        }
+      } else {
+        setGeneralError(err?.message || (isRegistering ? 'Error al registrarse.' : 'Credenciales incorrectas.'));
+      }
+
       setToast({ message: isRegistering ? 'Error en el registro' : 'Error al iniciar sesión', type: 'error' });
     } finally {
       setLoading(false);
@@ -95,7 +119,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} noValidate>
             <div className="form-grid">
               {isRegistering && (
-                <div className="field field--name">
+                <div className="field">
                   <label htmlFor="name">Nombre</label>
                   <input
                     id="name"
@@ -105,11 +129,13 @@ export default function Login() {
                     value={form.name}
                     onChange={handleChange}
                     disabled={loading}
+                    style={fieldErrors.name ? { borderColor: '#c62828' } : {}}
                   />
+                  {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
                 </div>
               )}
 
-              <div className="field field--email">
+              <div className="field">
                 <label htmlFor="email">Correo</label>
                 <input
                   id="email"
@@ -119,10 +145,12 @@ export default function Login() {
                   value={form.email}
                   onChange={handleChange}
                   disabled={loading}
+                  style={fieldErrors.email ? { borderColor: '#c62828' } : {}}
                 />
+                {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
               </div>
 
-              <div className="field field--password">
+              <div className="field">
                 <label htmlFor="password">Contraseña</label>
                 <input
                   id="password"
@@ -132,14 +160,16 @@ export default function Login() {
                   value={form.password}
                   onChange={handleChange}
                   disabled={loading}
+                  style={fieldErrors.password ? { borderColor: '#c62828' } : {}}
                 />
+                {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
               </div>
             </div>
 
-            {error && <div className="general-error" role="alert">{error}</div>}
+            {generalError && <div className="general-error" role="alert">{generalError}</div>}
 
-            <div className="form-actions" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-              <button className="boton-guardado" type="submit" disabled={loading} style={{ width: '100%' }}>
+            <div className="form-actions">
+              <button className="boton-guardado" type="submit" disabled={loading}>
                 {loading ? (isRegistering ? 'Registrando...' : 'Ingresando...') : (isRegistering ? 'Registrarse' : 'Ingresar')}
               </button>
 
