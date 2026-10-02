@@ -9,6 +9,10 @@ export default function Hoy() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Estados para los filtros ('todos', 'vencidas', 'hoy', 'proximas')
+  const [filtroCategoria, setFiltroCategoria] = useState('todos');
+  const [filtroEstado, setFiltroEstado] = useState('todos');
+
   const cargarDatosHoy = async () => {
     setLoading(true);
     setError(null);
@@ -39,7 +43,7 @@ export default function Hoy() {
     );
   }
 
-  // C4: ESTADO DE ERROR (Alineado con la paleta de colores y estilo general)
+  // C4: ESTADO DE ERROR
   if (error) {
     return (
       <main className="hoy-principal">
@@ -73,8 +77,6 @@ export default function Hoy() {
               fontSize: '14px',
               transition: 'background 0.2s'
             }}
-            onMouseOver={(e) => e.target.style.background = '#4f46e5'}
-            onMouseOut={(e) => e.target.style.background = '#6366f1'}
           >
             Reintentar
           </button>
@@ -83,12 +85,36 @@ export default function Hoy() {
     );
   }
 
-  const vencidas = data?.vencidas || [];
-  const paraHoy = data?.hoy || [];
-  const proximas = data?.proximas || [];
+  // Lógica de filtrado de tareas
+  const filtrarTarea = (t) => {
+    const coincideEstado = filtroEstado === 'todos' || t.status.toLowerCase() === filtroEstado.toLowerCase();
+    return coincideEstado;
+  };
+
+  const vencidasOriginales = data?.vencidas || [];
+  const paraHoyOriginales = data?.hoy || [];
+  const proximasOriginales = data?.proximas || [];
+
+  // Filtrar según la categoría seleccionada (incluyendo 'proximas')
+  const vencidas = (filtroCategoria === 'todos' || filtroCategoria === 'vencidas') 
+    ? vencidasOriginales.filter(filtrarTarea) 
+    : [];
+
+  const paraHoy = (filtroCategoria === 'todos' || filtroCategoria === 'hoy') 
+    ? paraHoyOriginales.filter(filtrarTarea) 
+    : [];
+
+  const proximas = (filtroCategoria === 'todos' || filtroCategoria === 'proximas') 
+    ? proximasOriginales.filter(filtrarTarea) 
+    : [];
 
   const noHayTareas = vencidas.length === 0 && paraHoy.length === 0 && proximas.length === 0;
-  const totalTareasAtencion = data?.capacidad?.tareasAtencion || paraHoy.length;
+  const totalTareasAtencion = data?.capacidad?.tareasAtencion || paraHoyOriginales.length;
+
+  const limpiarFiltros = () => {
+    setFiltroCategoria('todos');
+    setFiltroEstado('todos');
+  };
 
   return (
     <main className="hoy-principal">
@@ -130,12 +156,40 @@ export default function Hoy() {
         </div>
       </section>
 
-      {/* Filtros y Regla de orden visible y justificada */}
+      {/* Filtros Interactivos */}
       <div className="filtros-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div className="filtros-grupo">
-          <button className="filtro-pill active">Todos los eventos</button>
-          <button className="filtro-pill">Estado: Todos</button>
-          <button className="filtro-pill filtro-limpiar">Limpiar filtros</button>
+        <div className="filtros-grupo" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button 
+            className={`filtro-pill ${filtroCategoria === 'todos' ? 'active' : ''}`}
+            onClick={() => setFiltroCategoria('todos')}
+          >
+            Todos los eventos
+          </button>
+          <button 
+            className={`filtro-pill ${filtroCategoria === 'hoy' ? 'active' : ''}`}
+            onClick={() => setFiltroCategoria('hoy')}
+          >
+            Solo para hoy
+          </button>
+          <button 
+            className={`filtro-pill ${filtroCategoria === 'vencidas' ? 'active' : ''}`}
+            onClick={() => setFiltroCategoria('vencidas')}
+          >
+            Solo vencidas
+          </button>
+          <button 
+            className={`filtro-pill ${filtroCategoria === 'proximas' ? 'active' : ''}`}
+            onClick={() => setFiltroCategoria('proximas')}
+          >
+            Solo próximas
+          </button>
+          
+          {/* Botón de limpiar filtros */}
+          {(filtroCategoria !== 'todos' || filtroEstado !== 'todos') && (
+            <button className="filtro-pill filtro-limpiar" onClick={limpiarFiltros}>
+              Limpiar filtros ✕
+            </button>
+          )}
         </div>
         
         <div className="regla-banner" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '10px 14px', borderRadius: '8px', maxWidth: '380px', fontSize: '12px', color: '#475569', textAlign: 'justify' }}>
@@ -143,7 +197,7 @@ export default function Hoy() {
         </div>
       </div>
 
-      {/* C4: ESTADO VACÍO (Sin duplicar el botón de crear evento) */}
+      {/* C4: ESTADO VACÍO */}
       {noHayTareas ? (
         <div className="estado-vacio" style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '12px', border: '1px dashed #cbd5e1', marginTop: '20px' }}>
           <div className="estado-vacio-icono" style={{ marginBottom: '12px', color: '#6366f1' }}>
@@ -152,8 +206,8 @@ export default function Hoy() {
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           </div>
-          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>¡Todo al día! No hay pendientes</h3>
-          <p style={{ color: '#64748b' }}>No tienes tareas programadas para hoy. Utiliza el botón superior para crear nuevos eventos.</p>
+          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>¡Sin resultados con estos filtros!</h3>
+          <p style={{ color: '#64748b' }}>No hay tareas que coincidan con los filtros seleccionados.</p>
         </div>
       ) : (
         <>
