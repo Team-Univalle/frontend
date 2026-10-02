@@ -39,7 +39,7 @@ export default function Hoy() {
 
   return (
     <main className="hoy-principal">
-      {/* Cabecera */}
+      {/* Cabecera (Ya sin el badge de usuario) */}
       <div className="hoy-header-container">
         <div className="hoy-titulo-area">
           <h1>Hoy</h1>
@@ -47,12 +47,6 @@ export default function Hoy() {
           <p>{data?.fechaTexto || new Date().toLocaleDateString()}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div className="hoy-user-badge">
-            <div className="hoy-user-avatar">
-              {data?.usuario?.iniciales || 'U'}
-            </div>
-            <span>{data?.usuario?.nombre || 'Usuario'}</span>
-          </div>
           <button
             className="boton-crear-evento"
             onClick={() => navigate('/crear')}
