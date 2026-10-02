@@ -9,9 +9,10 @@ export default function Hoy() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados para los filtros ('todos', 'vencidas', 'hoy', 'proximas')
-  const [filtroCategoria, setFiltroCategoria] = useState('todos');
-  const [filtroEstado, setFiltroEstado] = useState('todos');
+  // Estados para los filtros
+  const [filtroCategoria, setFiltroCategoria] = useState('todos'); // 'todos', 'vencidas', 'hoy', 'proximas'
+  const [filtroEstado, setFiltroEstado] = useState('todos');       // 'todos', 'pendiente', etc.
+  const [filtroEvento, setFiltroEvento] = useState('todos');       // 'todos' o el nombre del evento seleccionado
 
   const cargarDatosHoy = async () => {
     setLoading(true);
@@ -85,17 +86,22 @@ export default function Hoy() {
     );
   }
 
-  // Lógica de filtrado de tareas
-  const filtrarTarea = (t) => {
-    const coincideEstado = filtroEstado === 'todos' || t.status.toLowerCase() === filtroEstado.toLowerCase();
-    return coincideEstado;
-  };
-
   const vencidasOriginales = data?.vencidas || [];
   const paraHoyOriginales = data?.hoy || [];
   const proximasOriginales = data?.proximas || [];
 
-  // Filtrar según la categoría seleccionada (incluyendo 'proximas')
+  // Extraer una lista única de eventos de todas las tareas para llenar el selector dinámicamente
+  const todasLasTareas = [...vencidasOriginales, ...paraHoyOriginales, ...proximasOriginales];
+  const eventosDisponibles = Array.from(new Set(todasLasTareas.map(t => t.event_name).filter(Boolean)));
+
+  // Lógica de filtrado combinada (Categoría + Estado + Evento)
+  const filtrarTarea = (t) => {
+    const coincideEstado = filtroEstado === 'todos' || t.status?.toLowerCase() === filtroEstado.toLowerCase();
+    const coincideEvento = filtroEvento === 'todos' || t.event_name === filtroEvento;
+    return coincideEstado && coincideEvento;
+  };
+
+  // Filtrar según la categoría y los demás criterios
   const vencidas = (filtroCategoria === 'todos' || filtroCategoria === 'vencidas') 
     ? vencidasOriginales.filter(filtrarTarea) 
     : [];
@@ -114,7 +120,10 @@ export default function Hoy() {
   const limpiarFiltros = () => {
     setFiltroCategoria('todos');
     setFiltroEstado('todos');
+    setFiltroEvento('todos');
   };
+
+  const hayFiltrosActivos = filtroCategoria !== 'todos' || filtroEstado !== 'todos' || filtroEvento !== 'todos';
 
   return (
     <main className="hoy-principal">
@@ -156,36 +165,53 @@ export default function Hoy() {
         </div>
       </section>
 
-      {/* Filtros Interactivos */}
-      <div className="filtros-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div className="filtros-grupo" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button 
-            className={`filtro-pill ${filtroCategoria === 'todos' ? 'active' : ''}`}
-            onClick={() => setFiltroCategoria('todos')}
-          >
-            Todos los eventos
-          </button>
+      {/* Filtros Interactivos (Sin el botón "Todos los eventos") */}
+      <div className="filtros-container" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="filtros-grupo" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button 
             className={`filtro-pill ${filtroCategoria === 'hoy' ? 'active' : ''}`}
-            onClick={() => setFiltroCategoria('hoy')}
+            onClick={() => setFiltroCategoria(filtroCategoria === 'hoy' ? 'todos' : 'hoy')}
           >
             Solo para hoy
           </button>
           <button 
             className={`filtro-pill ${filtroCategoria === 'vencidas' ? 'active' : ''}`}
-            onClick={() => setFiltroCategoria('vencidas')}
+            onClick={() => setFiltroCategoria(filtroCategoria === 'vencidas' ? 'todos' : 'vencidas')}
           >
             Solo vencidas
           </button>
           <button 
             className={`filtro-pill ${filtroCategoria === 'proximas' ? 'active' : ''}`}
-            onClick={() => setFiltroCategoria('proximas')}
+            onClick={() => setFiltroCategoria(filtroCategoria === 'proximas' ? 'todos' : 'proximas')}
           >
             Solo próximas
           </button>
+
+          {/* Selector de Evento */}
+          <select 
+            value={filtroEvento} 
+            onChange={(e) => setFiltroEvento(e.target.value)}
+            style={{
+              padding: '6px 12px',
+              borderRadius: '20px',
+              border: '1px solid #cbd5e1',
+              background: '#f8fafc',
+              fontSize: '13px',
+              color: '#334155',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+          >
+            <option value="todos">Evento: Todos</option>
+            {eventosDisponibles.map((evento, index) => (
+              <option key={index} value={evento}>
+                {evento}
+              </option>
+            ))}
+          </select>
           
           {/* Botón de limpiar filtros */}
-          {(filtroCategoria !== 'todos' || filtroEstado !== 'todos') && (
+          {hayFiltrosActivos && (
             <button className="filtro-pill filtro-limpiar" onClick={limpiarFiltros}>
               Limpiar filtros ✕
             </button>
