@@ -218,8 +218,9 @@
 }
 
 .seccion-badge {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
@@ -228,11 +229,17 @@
   color: #b91c1c;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1; /* Evita desalineaciones de la fuente */
 }
 
 .seccion-badge.warning {
   background-color: #fef3c7;
   color: #b45309;
+}
+
+.seccion-badge.proxima {
+  background-color: #e0e7ff; /* Azul (Próximas) */
+  color: #4f46e5;
 }
 
 /* Tarjeta de Tarea Individual */
@@ -365,4 +372,46 @@
     align-items: flex-start;
     gap: 12px;
   }
+}
+
+.estado-vacio {
+  width: 100%;
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-sizing: border-box;
+  text-align: center;
+  gap: 8px;
+  margin-top: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.estado-vacio-icono {
+  width: 56px;
+  height: 56px;
+  background-color: #e0e7ff; /* Tono índigo claro acorde a tus botones activos */
+  color: #4f46e5; /* Tu color primario */
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+.estado-vacio h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.estado-vacio p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #6b7280;
 }
