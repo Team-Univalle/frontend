@@ -218,8 +218,9 @@
 }
 
 .seccion-badge {
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
@@ -228,11 +229,17 @@
   color: #b91c1c;
   font-size: 12px;
   font-weight: 700;
+  line-height: 1; /* Evita desalineaciones de la fuente */
 }
 
 .seccion-badge.warning {
   background-color: #fef3c7;
   color: #b45309;
+}
+
+.seccion-badge.proxima {
+  background-color: #e0e7ff; /* Azul (Próximas) */
+  color: #4f46e5;
 }
 
 /* Tarjeta de Tarea Individual */

@@ -143,7 +143,7 @@ export default function Hoy() {
         <section className="seccion-tareas">
           <div className="seccion-header">
             <h2>Próximas</h2>
-            <span className="seccion-badge">{proximas.length}</span>
+            <span className="seccion-badge proxima">{proximas.length}</span>
           </div>
           {proximas.map((t) => (
             <div key={t.id} className="tarea-card proxima">
