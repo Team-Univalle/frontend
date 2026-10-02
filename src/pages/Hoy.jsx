@@ -31,16 +31,12 @@ export default function Hoy() {
   const paraHoy = data?.hoy || [];
   const proximas = data?.proximas || [];
 
-  // Comprobamos si no hay tareas en ninguna de las secciones
-  const noHayTareas = vencidas.length === 0 && paraHoy.length === 0 && proximas.length === 0;
-
   return (
     <main className="hoy-principal">
       {/* Cabecera */}
       <div className="hoy-header-container">
         <div className="hoy-titulo-area">
           <h1>Hoy</h1>
-          <br></br>
           <p>{data?.fechaTexto || new Date().toLocaleDateString()}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -59,7 +55,7 @@ export default function Hoy() {
         </div>
       </div>
 
-      {/* Tarjeta de Capacidad */}
+      {/* Tarjeta de Capacidad (Si el backend la provee, de lo contrario muestra valores por defecto) */}
       <section className="capacidad-card">
         <div className="capacidad-info">
           <div className="capacidad-textos">
@@ -90,98 +86,81 @@ export default function Hoy() {
         <span className="regla-texto">Regla: vencidas &rarr; hoy &rarr; próximas; empate = menor esfuerzo</span>
       </div>
 
-      {/* Estado Vacío (Se muestra si no hay tareas) */}
-      {noHayTareas ? (
-        <div className="estado-vacio">
-            <div className="estado-vacio-icono">
-              {/* Ícono SVG limpio acorde al sistema */}
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
+      {/* Sección Vencidas */}
+      {vencidas.length > 0 && (
+        <section className="seccion-tareas">
+          <div className="seccion-header">
+            <h2>Vencidas</h2>
+            <span className="seccion-badge">{vencidas.length}</span>
+          </div>
+          {vencidas.map((t) => (
+            <div key={t.id} className="tarea-card vencida">
+              <div className="tarea-contenido">
+                <h4 className="tarea-titulo">{t.name}</h4>
+                <p className="tarea-subtitulo">{t.event_name}</p>
+              </div>
+              <div className="tarea-derecha">
+                <div className="tarea-meta">
+                  <span className="badge-tiempo">{t.estimated_hours}h est.</span>
+                  <span className="badge-alerta-tiempo">{t.target_date}</span>
+                </div>
+                <button className="tarea-accion-btn">{t.status}</button>
+              </div>
             </div>
-            <h3>¡Todo al día!</h3>
-            <p>No tienes tareas pendientes programadas para hoy.</p>
+          ))}
+        </section>
+      )}
+
+      {/* Sección Para hoy */}
+      {paraHoy.length > 0 && (
+        <section className="seccion-tareas">
+          <div className="seccion-header">
+            <h2>Para hoy</h2>
+            <span className="seccion-badge warning">{paraHoy.length}</span>
+          </div>
+          {paraHoy.map((t) => (
+            <div key={t.id} className="tarea-card hoy">
+              <div className="tarea-contenido">
+                <h4 className="tarea-titulo">{t.name}</h4>
+                <p className="tarea-subtitulo">{t.event_name}</p>
+              </div>
+              <div className="tarea-derecha">
+                <div className="tarea-meta">
+                  <span className="badge-tiempo">{t.estimated_hours}h est.</span>
+                  <span className="badge-etiqueta warning">
+                    {t.status}
+                  </span>
+                </div>
+                <button className="tarea-accion-btn">Completar</button>
+              </div>
             </div>
-      ) : (
-        <>
-          {/* Sección Vencidas */}
-          {vencidas.length > 0 && (
-            <section className="seccion-tareas">
-              <div className="seccion-header">
-                <h2>Vencidas</h2>
-                <span className="seccion-badge">{vencidas.length}</span>
-              </div>
-              {vencidas.map((t) => (
-                <div key={t.id} className="tarea-card vencida">
-                  <div className="tarea-contenido">
-                    <h4 className="tarea-titulo">{t.name}</h4>
-                    <p className="tarea-subtitulo">{t.event_name}</p>
-                  </div>
-                  <div className="tarea-derecha">
-                    <div className="tarea-meta">
-                      <span className="badge-tiempo">{t.estimated_hours}h est.</span>
-                      <span className="badge-alerta-tiempo">{t.target_date}</span>
-                    </div>
-                    <button className="tarea-accion-btn">{t.status}</button>
-                  </div>
-                </div>
-              ))}
-            </section>
-          )}
+          ))}
+        </section>
+      )}
 
-          {/* Sección Para hoy */}
-          {paraHoy.length > 0 && (
-            <section className="seccion-tareas">
-              <div className="seccion-header">
-                <h2>Para hoy</h2>
-                <span className="seccion-badge warning">{paraHoy.length}</span>
+      {/* Sección Próximas */}
+      {proximas.length > 0 && (
+        <section className="seccion-tareas">
+          <div className="seccion-header">
+            <h2>Próximas</h2>
+            <span className="seccion-badge proxima">{proximas.length}</span>
+          </div>
+          {proximas.map((t) => (
+            <div key={t.id} className="tarea-card proxima">
+              <div className="tarea-contenido">
+                <h4 className="tarea-titulo">{t.name}</h4>
+                <p className="tarea-subtitulo">{t.event_name}</p>
               </div>
-              {paraHoy.map((t) => (
-                <div key={t.id} className="tarea-card hoy">
-                  <div className="tarea-contenido">
-                    <h4 className="tarea-titulo">{t.name}</h4>
-                    <p className="tarea-subtitulo">{t.event_name}</p>
-                  </div>
-                  <div className="tarea-derecha">
-                    <div className="tarea-meta">
-                      <span className="badge-tiempo">{t.estimated_hours}h est.</span>
-                      <span className="badge-etiqueta warning">
-                        {t.status}
-                      </span>
-                    </div>
-                    <button className="tarea-accion-btn">Completar</button>
-                  </div>
+              <div className="tarea-derecha">
+                <div className="tarea-meta">
+                  <span className="badge-tiempo">{t.estimated_hours}h est.</span>
+                  <span className="badge-etiqueta">{t.target_date}</span>
                 </div>
-              ))}
-            </section>
-          )}
-
-          {/* Sección Próximas */}
-          {proximas.length > 0 && (
-            <section className="seccion-tareas">
-              <div className="seccion-header">
-                <h2>Próximas</h2>
-                <span className="seccion-badge proxima">{proximas.length}</span>
+                <button className="tarea-accion-btn">{t.status}</button>
               </div>
-              {proximas.map((t) => (
-                <div key={t.id} className="tarea-card proxima">
-                  <div className="tarea-contenido">
-                    <h4 className="tarea-titulo">{t.name}</h4>
-                    <p className="tarea-subtitulo">{t.event_name}</p>
-                  </div>
-                  <div className="tarea-derecha">
-                    <div className="tarea-meta">
-                      <span className="badge-tiempo">{t.estimated_hours}h est.</span>
-                      <span className="badge-etiqueta">{t.target_date}</span>
-                    </div>
-                    <button className="tarea-accion-btn">{t.status}</button>
-                  </div>
-                </div>
-              ))}
-            </section>
-          )}
-        </>
+            </div>
+          ))}
+        </section>
       )}
     </main>
   );
