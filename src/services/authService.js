@@ -2,12 +2,12 @@ import apiClient from './apiClient';
 
 /**
  * Inicia sesión enviando las credenciales al backend.
- * @param {Object} credentials - { email, password } (o username según configure tu backend)
+ * @param {Object} credentials - { email, password }
  * @returns {Promise<Object>} Retorna los datos del usuario y el token de acceso.
  */
 export async function loginUser(credentials) {
-  // Ajusta la ruta '/auth/login/' o '/api/login/' según lo que defina tu backend
-  const response = await apiClient('/auth/login/', {
+  // CORRECCIÓN: Cambiado de '/auth/login/' a '/login' para que coincida con tu urls.py
+  const response = await apiClient('/login', {
     method: 'POST',
     body: JSON.stringify(credentials),
   });
@@ -15,17 +15,12 @@ export async function loginUser(credentials) {
   return response;
 }
 
-/**
- * Cierra la sesión limpiando el token del almacenamiento local.
- */
 export function logoutUser() {
   localStorage.removeItem('token');
-  localStorage.removeItem('user'); // Por si también guardas datos del usuario
+  localStorage.removeItem('user');
 }
 
-/**
- * Obtiene los datos del usuario autenticado actual (opcional, si tu backend tiene la ruta).
- */
 export async function getCurrentUser() {
-  return await apiClient('/auth/me/');
+  // Y si usas '/auth/me/' aquí, recuerda que en tu urls.py está como '/me'
+  return await apiClient('/me');
 }
