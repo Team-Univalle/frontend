@@ -1,11 +1,13 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   CalendarCheck2,
   ChartNoAxesColumnIncreasing,
   Home,
   ListChecks,
+  LogOut,
   Plus,
 } from 'lucide-react';
+import { logoutUser } from '../services/authService';
 import './AppLayout.css';
 
 const links = [
@@ -17,6 +19,12 @@ const links = [
 
 export default function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logoutUser();
+    navigate('/login', { replace: true });
+  }
 
   return (
     <div className="app-shell">
@@ -44,6 +52,11 @@ export default function AppLayout() {
           <progress value="6" max="8" aria-label="Capacidad diaria" />
           <small>6 h programadas hoy</small>
         </div>
+
+        <button className="app-logout" type="button" onClick={handleLogout}>
+          <LogOut size={17} aria-hidden="true" />
+          <span>Cerrar sesión</span>
+        </button>
       </aside>
 
       <div className="app-content"><Outlet /></div>
