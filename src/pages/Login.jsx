@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginUser } from '../services/authService'; // <--- Importamos el servicio
+import { loginUser } from '../services/authService';
 import Toast from '../components/Toast';
 import '../components/Toast.css';
 import './Login.css';
@@ -27,11 +27,7 @@ export default function Login() {
 
     setLoading(true);
     try {
-      // Llamamos a la API real a través de nuestro authService
-      // El backend te devolverá un objeto que comúnmente contiene el token y datos del usuario
       const response = await loginUser(form);
-
-      // Guardamos el token en el localStorage (asegúrate de que la propiedad coincida con lo que envíe tu backend, ej: response.token o response.access)
       const token = response.token || response.access;
       if (!token) {
         throw new Error('No se recibió un token de autenticación.');
@@ -44,10 +40,11 @@ export default function Login() {
 
       setToast({ message: '¡Bienvenido!', type: 'success' });
       setTimeout(() => {
-        navigate('/eventos'); // Te redirige a la vista principal protegida
+        navigate('/today'); // Redirige a la vista principal correcta (Hoy)
       }, 800);
     } catch (err) {
-      const mensajeError = err?.data?.detail || err?.message || 'Credenciales incorrectas.';
+      // Modificado de 'detail' a 'error' para que coincida exactamente con tu exceptions.py del backend
+      const mensajeError = err?.data?.error || err?.message || 'Credenciales incorrectas.';
       setError(mensajeError);
       setToast({ message: 'Error al iniciar sesión', type: 'error' });
     } finally {
@@ -56,49 +53,74 @@ export default function Login() {
   }
 
   return (
-    <main className="forms-principal">
-      <h1>Iniciar Sesión</h1>
-      <p>Ingresa tus datos para acceder a tu plataforma</p>
+    <div className="login-layout">
+      {/* Panel Izquierdo (Oscuro con Branding y Frase) */}
+      <aside className="login-sidebar">
+        <div className="sidebar-top">
+          <h1>Organiza</h1>
+          <br></br>
+          <p>Tus eventos bajo control, incluso cuando cambian los planes.</p>
+        </div>
 
-      <section className="forms" aria-label="Iniciar sesión">
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="form-grid">
-            <div className="field field--email">
-              <label htmlFor="email">Correo electrónico</label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </div>
+        <div className="sidebar-quote-card">
+          <blockquote>
+            “En segundos quiero saber qué requiere atención hoy.”
+          </blockquote>
+          <span>
+            Diseñado para organizadores que coordinan proveedores, clientes y múltiples fechas a la vez.
+          </span>
+        </div>
+      </aside>
 
-            <div className="field field--password">
-              <label htmlFor="password">Contraseña</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                disabled={loading}
-              />
-            </div>
+      {/* Panel Derecho (Formulario de Acceso) */}
+      <main className="login-main">
+        <div className="login-form-container">
+          <div className="login-header">
+            <h2>Iniciar sesión</h2>
+            <p>Accede a tu planificación y prioridades.</p>
           </div>
 
-          {error && <div className="general-error" role="alert">{error}</div>}
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="form-grid">
+              <div className="field field--email">
+                <label htmlFor="email">Correo</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="veronica@correo.com"
+                  value={form.email}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </div>
 
-          <div className="form-actions">
-            <button className="boton-guardado" type="submit" disabled={loading}>
-              {loading ? 'Entrando...' : 'Iniciar Sesión'}
-            </button>
-          </div>
-        </form>
+              <div className="field field--password">
+                <label htmlFor="password">Contraseña</label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••••"
+                  value={form.password}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </div>
+            </div>
 
-        <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
-      </section>
-    </main>
+            {error && <div className="general-error" role="alert">{error}</div>}
+
+            <div className="form-actions">
+              <button className="boton-guardado" type="submit" disabled={loading}>
+                {loading ? 'Ingresando...' : 'Ingresar'}
+              </button>
+            </div>
+          </form>
+
+          <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
+        </div>
+      </main>
+    </div>
   );
 }
