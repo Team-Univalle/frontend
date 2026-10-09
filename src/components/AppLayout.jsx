@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   CalendarCheck2,
@@ -12,7 +12,8 @@ import {
 import LimiteDiarioModal from './LimiteDiarioModal';
 import Toast from './Toast';
 import { getCurrentUser, logoutUser } from '../services/authService';
-import { getHoyData } from '../services/hoyService';
+import { getCurrentCapacity } from '../services/conflictsService';
+import { PLANNING_UPDATED, notifyPlanningUpdated } from '../services/planningEvents';
 import { getDailyLimit } from '../services/limitService';
 import { LIMITE_POR_DEFECTO, formatHoras, textoHoras } from '../utils/limite';
 import './AppLayout.css';
@@ -30,7 +31,9 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
-  const [limite, setLimite] = useState(LIMITE_POR_DEFECTO);
+  const [limite, setLimite] = useState(null);
+  const [capacityError, setCapacityError] = useState('');
+  const capacityRequest = useRef(0);
   const [programadasHoy, setProgramadasHoy] = useState(null);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [toast, setToast] = useState(null);
@@ -48,19 +51,30 @@ export default function AppLayout() {
 
   // Límite guardado + horas programadas hoy (las páginas pueden volver a pedirlo con refrescarCapacidad)
   const cargarCapacidad = useCallback(async () => {
-    const [limiteResult, hoyResult] = await Promise.allSettled([getDailyLimit(), getHoyData()]);
+    const request = ++capacityRequest.current;
+    const token = localStorage.getItem('token');
+    setLimite(null);
+    setProgramadasHoy(null);
+    setCapacityError('');
+    const date = new Date().toLocaleDateString('en-CA');
+    const [limiteResult, hoyResult] = await Promise.allSettled([getDailyLimit(), getCurrentCapacity(date)]);
+    if (request !== capacityRequest.current || token !== localStorage.getItem('token')) return;
     if (limiteResult.status === 'fulfilled') {
       setLimite(limiteResult.value.limite ?? LIMITE_POR_DEFECTO);
     }
     if (hoyResult.status === 'fulfilled') {
-      const horas = Number(hoyResult.value?.capacidad?.horasOcupadas);
-      setProgramadasHoy(Number.isFinite(horas) ? horas : 0);
+      setProgramadasHoy(hoyResult.value.planned_hours);
     }
+    if (limiteResult.status === 'rejected' || hoyResult.status === 'rejected') setCapacityError('No pudimos consultar tu capacidad diaria.');
   }, []);
 
+  const invalidateCapacity = useCallback(() => { capacityRequest.current++; }, []);
   useEffect(() => {
-    cargarCapacidad();
-  }, [cargarCapacidad]);
+    let active = true;
+    queueMicrotask(() => { if (active) cargarCapacidad(); });
+    window.addEventListener(PLANNING_UPDATED, cargarCapacidad);
+    return () => { active = false; invalidateCapacity(); window.removeEventListener(PLANNING_UPDATED, cargarCapacidad); };
+  }, [cargarCapacidad, invalidateCapacity, location.pathname]);
 
   useEffect(() => {
     if (!recienActualizado) return undefined;
@@ -74,6 +88,7 @@ export default function AppLayout() {
     setLimite(nuevoLimite);
     setModalAbierto(false);
     setRecienActualizado(true);
+    notifyPlanningUpdated();
     setToast({
       id: Date.now(),
       type: 'success',
@@ -91,7 +106,7 @@ export default function AppLayout() {
   const nombreUsuario = rawNombre.includes('@') ? rawNombre.split('@')[0] : rawNombre;
   const inicialUsuario = user?.iniciales || nombreUsuario.charAt(0).toUpperCase();
 
-  const hayDato = Number.isFinite(programadasHoy);
+  const hayDato = Number.isFinite(programadasHoy) && Number.isFinite(limite);
   const exceso = hayDato ? programadasHoy - limite : 0;
   const justo = hayDato && Math.abs(exceso) < 1e-9;
   const sobrepasa = hayDato && exceso > 1e-9;
@@ -146,8 +161,9 @@ export default function AppLayout() {
             <span style={{ width: `${porcentaje}%` }} />
           </div>
           <p className={`capacidad-diaria__limite${recienActualizado ? ' is-strong' : ''}`}>
-            Tu límite: {textoHoras(limite)} por día
+            Tu límite: {limite === null ? 'consultando...' : `${textoHoras(limite)} por día`}
           </p>
+          {capacityError && <p role="alert">{capacityError} <button type="button" onClick={cargarCapacidad}>Reintentar</button></p>}
           {justo && <p className="capacidad-diaria__nota">Hoy llegas justo a tu límite.</p>}
           {sobrepasa && (
             <p className="capacidad-diaria__nota capacidad-diaria__nota--alerta">

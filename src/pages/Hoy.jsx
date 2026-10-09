@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getHoyData } from '../services/hoyService';
+import { PLANNING_UPDATED } from '../services/planningEvents';
+import { getCurrentCapacity } from '../services/conflictsService';
 import './Hoy.css';
 
 const FILTROS_KEY = 'hoy:filtros';
@@ -18,13 +20,15 @@ export default function Hoy() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [capacity, setCapacity] = useState(null);
+  const [capacityError, setCapacityError] = useState('');
 
   // Estados para los filtros
   const [filtroCategoria, setFiltroCategoria] = useState(() => leerFiltros().categoria ?? 'todos');
   const [filtroEstado, setFiltroEstado] = useState(() => leerFiltros().estado ?? 'todos');
   const [filtroEvento, setFiltroEvento] = useState(() => leerFiltros().evento ?? 'todos');
 
-  const cargarDatosHoy = async () => {
+  const cargarDatosHoy = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -36,7 +40,23 @@ export default function Hoy() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const cargarCapacidad = useCallback(async () => {
+    setCapacity(null);
+    setCapacityError('');
+    const date = new Date().toLocaleDateString('en-CA');
+    try { setCapacity(await getCurrentCapacity(date)); }
+    catch (err) { setCapacityError(err.message); }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = () => { if (active) { cargarDatosHoy(); cargarCapacidad(); } };
+    refresh();
+    window.addEventListener(PLANNING_UPDATED, refresh);
+    return () => { active = false; window.removeEventListener(PLANNING_UPDATED, refresh); };
+  }, [cargarDatosHoy, cargarCapacidad]);
 
   useEffect(() => {
     try {
@@ -167,7 +187,7 @@ export default function Hoy() {
           <div className="capacidad-textos">
             <h3>Capacidad de hoy</h3>
             <div className="capacidad-numeros">
-              {data?.capacidad?.horasOcupadas || 0} <span>de {data?.capacidad?.horasDisponibles || 8}h</span>
+              {capacity ? capacity.planned_hours : '—'} <span>de {capacity ? capacity.daily_limit : '—'}h</span>
             </div>
           </div>
           <div className="alerta-atencion">
@@ -177,9 +197,10 @@ export default function Hoy() {
         <div className="barra-progreso-bg">
           <div
             className="barra-progreso-fill"
-            style={{ width: `${data?.capacidad?.porcentaje || 0}%` }}
+            style={{ width: `${capacity ? Math.min(100, capacity.planned_hours / capacity.daily_limit * 100) : 0}%` }}
           ></div>
         </div>
+        {capacityError && <p role="alert">No pudimos cargar la capacidad. {capacityError} <button type="button" onClick={cargarCapacidad}>Reintentar</button></p>}
       </section>
 
       {/* Filtros Interactivos (Sin el botón "Todos los eventos") */}

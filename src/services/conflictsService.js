@@ -1,25 +1,30 @@
-import apiClient from './apiClient';
+import apiClient from './apiClient.js';
 
-const CAMPOS_NUMERICOS = ['planned_hours', 'task_hours', 'total_hours', 'daily_limit', 'excess_hours'];
+const CAMPOS_NUMERICOS = ['planned_hours', 'daily_limit'];
+
+export function validateCapacity(response) {
+  if (!response || typeof response.conflict !== 'boolean' ||
+    !CAMPOS_NUMERICOS.every((field) => typeof response[field] === 'number' && Number.isFinite(response[field])) ||
+    response.daily_limit < 1 || response.daily_limit > 16 ||
+    CAMPOS_NUMERICOS.some((field) => response[field] < 0)) {
+    throw new Error('La respuesta de capacidad llegó incompleta. No se guardaron cambios; reintenta cuando el servidor confirme las horas planificadas y el límite.');
+  }
+  return response;
+}
+
+// Consulta de carga YA guardada: no es una evaluación de una propuesta.
+export async function getCurrentCapacity(date) {
+  return checkConflict({ date });
+}
 
 /**
- * Pregunta al servidor si dejar `hours` horas en `date` supera el límite diario del usuario.
- * La regla (planificadas + gestión > límite personal) vive solo en el backend:
- * aquí únicamente se valida que la respuesta venga completa.
+ * Consume el contrato actual: evalúa únicamente la carga ya guardada de date.
+ * No suma horas propuestas ni calcula el conflicto en el cliente.
  */
-export async function checkConflict({ date, hours, excludeSubtaskId }) {
-  const params = new URLSearchParams({ date, hours: String(hours) });
-  if (excludeSubtaskId) params.set('exclude_subtask', excludeSubtaskId);
+export async function checkConflict({ date }) {
+  const params = new URLSearchParams({ date });
 
   const response = await apiClient(`/conflicts?${params.toString()}`);
 
-  const completa =
-    response &&
-    typeof response.conflict === 'boolean' &&
-    CAMPOS_NUMERICOS.every((campo) => Number.isFinite(response[campo]));
-
-  if (!completa) {
-    throw new Error('La respuesta de capacidad llegó incompleta.');
-  }
-  return response;
+  return validateCapacity(response);
 }
