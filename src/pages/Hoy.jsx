@@ -164,22 +164,17 @@ export default function Hoy() {
   const hayFiltrosActivos = filtroCategoria !== 'todos' || filtroEstado !== 'todos' || eventoActivo !== 'todos';
 
   return (
-    <main className="hoy-principal">
-      {/* Cabecera */}
-      <div className="hoy-header-container">
-        <div className="hoy-titulo-area">
-          <h1>Hoy</h1>
-          <p>{data?.fechaTexto || new Date().toLocaleDateString()}</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
-            className="boton-crear-evento"
-            onClick={() => navigate('/crear')}
-          >
-            + Crear evento
-          </button>
-        </div>
+    <main className="page-container">
+    {/* Cabecera Estándar */}
+    <header className="page-header">
+      <div>
+        <h1 className="page-header__title">Hoy</h1>
+        <p className="page-header__subtitle">{data?.fechaTexto || new Date().toLocaleDateString()}</p>
       </div>
+      <button className="boton-crear-evento" onClick={() => navigate('/crear')}>
+        + Crear evento
+      </button>
+    </header>
 
       {/* Tarjeta de Capacidad */}
       <section className="capacidad-card">

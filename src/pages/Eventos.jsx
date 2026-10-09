@@ -74,11 +74,16 @@ export default function Eventos() {
   }
 
   return (
-    <main className="eventos-page">
-      <header className="eventos-header">
-        <div><h1>Eventos</h1><p>Administra tus eventos y su plan logístico.</p></div>
-        <button type="button" onClick={() => navigate('/crear')}><Plus size={17} /> Crear evento</button>
-      </header>
+    <main className="page-container">
+    <header className="page-header">
+      <div>
+        <h1 className="page-header__title">Eventos</h1>
+        <p className="page-header__subtitle">Administra tus eventos y su plan logístico.</p>
+      </div>
+      <button className="boton-crear-evento" onClick={() => navigate('/crear')}>
+        + Crear evento
+      </button>
+    </header>
 
       {notice && <div className="eventos-notice" role="status"><span>{notice}</span><button type="button" onClick={() => setNotice('')} aria-label="Cerrar mensaje">×</button></div>}
 

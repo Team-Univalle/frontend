@@ -77,3 +77,34 @@
   font: inherit;
   font-size: 14px;
 }
+
+/* --- CONTENEDOR ESTÁNDAR PARA TODAS LAS VISTAS --- */
+.page-container {
+  padding: 2.5rem 2.5rem 3rem 2.5rem; /* Asegura el mismo margen en TODAS las páginas */
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* --- CABECERA UNIFICADA DE PÁGINA --- */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  min-height: 60px; /* Evita brincos si una vista no tiene botón a la derecha */
+}
+
+.page-header__title {
+  font-size: 2rem; /* 32px */
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.25rem 0;
+  line-height: 1.1;
+}
+
+.page-header__subtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin: 0;
+}
