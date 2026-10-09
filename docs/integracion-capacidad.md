@@ -1,30 +1,16 @@
-# Integración frontend de capacidad diaria
+# Integración de capacidad diaria y reprogramación
 
-## Contrato consumido
+- GET /daily-limit consulta el límite personal; PUT /daily-limit persiste un entero de 1 a 16. No se permiten decimales. El default de 6 se asigna en Backend, no en el navegador.
+- GET /conflicts?date=AAAA-MM-DD muestra carga actual. Con subtask_id, estimated_hours y status evalúa la propuesta, excluyendo la propia tarea, ejecutadas y otros usuarios. Devuelve conflict, planned_hours, task_hours, total_hours, daily_limit, excess, message y suggested_dates.
+- La regla total <= límite pertenece al servidor. Una respuesta incompleta o contradictoria muestra error, sin éxito ni PATCH.
+- PATCH /subtasks/ID revalida dentro de una transacción por organizador; 409 devuelve error global con code=overload_conflict y conflict. Esto cubre cambios concurrentes después de consultar disponibilidad.
+- El modal compartido por Detalle y Hoy conserva fecha/horas ante error, bloquea doble envío, permite mover o reducir, muestra cantidades del servidor y mantiene título/estado no editados.
+- Cancelar/Escape/cerrar no envía PATCH, restaura el foco y no marca Pospuesta. Solo el botón explícito Posponer cambia ese estado; no elimina su carga.
+- Tras éxito se reconsulta detalle y /today mediante planning:updated, sin F5. Filtros de Hoy se guardan por id de usuario.
+- Horas: valor finito >0, máximo 999.99 y dos decimales. Fechas válidas desde hoy hasta la fecha del evento.
 
-- GET /daily-limit devuelve `daily_limit_hours` (entero inclusivo 1–16).
-- PATCH /daily-limit recibe `{ "daily_limit_hours": 4 }` y devuelve el valor persistido. Se usa PATCH porque es el método implementado en DailyLimitView; no se supone soporte PUT.
-- GET /conflicts?date=AAAA-MM-DD consulta la carga ya guardada: `planned_hours` y `daily_limit` numéricos. Sidebar y Hoy muestran esos datos, no un total inventado de 0 ni un límite fijo.
-- GET /conflicts?date=AAAA-MM-DD devuelve `conflict` booleano, `planned_hours` y `daily_limit` numéricos; puede incluir `message` y `options` cuando hay conflicto. Se utiliza tal como está implementado, sin enviar hours/exclude_subtask ni exigir campos adicionales. Si devuelve true se muestra el aviso con las horas actuales y el mensaje del servidor; si devuelve false se continúa al PATCH. Una respuesta que no incluya los tres campos requeridos conserva el formulario y muestra error/reintento.
-- Si la evaluación permite guardar, se hace PATCH /subtasks/ID. Solo después de una respuesta exitosa se actualiza detalle, se reconsulta y se emite `planning:updated` para refrescar Hoy y capacidad. Cada entrada a Hoy consulta /today y conserva los filtros de sesión.
+## Verificación reproducible
 
-## Pendientes del Backend (no modificado)
-
-El main revisado (0ac736b) tiene GET /conflicts, pero solo evalúa la carga existente. Por solicitud se consume este contrato actual. Una fecha con 5h/límite6 devuelve false incluso si se pretende mover otras2h: no se garantiza prevención de sobrecarga de la propuesta. Tampoco puede anticipar si reducir horas resolvería un día actualmente sobrecargado. Esta limitación no se sustituye con cálculo frontend. Para completar US-07/US-08, BE debe evaluar la propuesta y revalidar al persistir. El cálculo actual incluye ejecutadas: BE debe confirmar la regla de gestiones no ejecutadas.
-
-La rama local de backend hoy (2bc1266) no contiene /daily-limit ni /conflicts; no cambiar ni mezclar ramas desde frontend. Ejecutar/desplegar el backend que tenga las API correspondientes y configurar VITE_API_URL para ese servidor.
-
-## Pruebas
-
-`node --test tests/planning.test.mjs`
-
-Pruebas de contrato con respuestas simuladas: carga guardada7/límite6; igualdad6/6; ausencia de cálculo de horas propuestas; respuesta incompleta; error/reintento; horas finitas positivas, máximo999.99 y2 decimales; GET/PATCH de límite personal; rango entero1–16; carga guardada del servidor. No prueban persistencia real ni reemplazan pruebas BE.
-
-Validación manual del contrato actual:
-
-1. Configurar A=6 y B=4; recargar e iniciar sesión con cada cuenta. Confirmar GET personal y ausencia de valores de la sesión anterior.
-2. Con7 horas ya guardadas y límite6, mostrar el aviso del servidor y no hacer PATCH mientras devuelve true.
-3. Con5 horas ya guardadas y límite6, devuelve false. Una edición válida continúa al PATCH; comprobar GET posterior con título/estado intactos. No afirmar que se evaluaron las horas propuestas.
-4. Abrir Hoy después del guardado y confirmar carga informada por Backend, agrupación y orden; recargar y comparar con GET.
-5. Cambiar fecha/horas, provocar error o respuesta incompleta y reintentar: conservar valores. Cancelar no envía PATCH. Doble clic solo inicia un guardado.
-6. Provocar 400 por límite: error junto al campo; fallo general: mensaje/reintento y valor editado conservado.
+Frontend: `node --test tests/*.test.mjs`, `npm run lint`, `npm run build`.
+Backend: `python manage.py test` usa SQLite temporal, sin modificar Supabase.
+Para QA integrada local: ver README del backend y sus settings QA. Cuentas/datos sintéticos separados de producción. Las capturas y resultados del informe identifican el entorno probado.

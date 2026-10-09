@@ -21,6 +21,7 @@ import {
   updateSubtask,
 } from '../services/subtasksService';
 import { checkConflict } from '../services/conflictsService';
+import ReprogramarModal from '../components/ReprogramarModal';
 import { notifyPlanningUpdated } from '../services/planningEvents';
 import { validateEvent } from '../utils/validateEvent';
 import { validateSubtask, validateFechaObjetivo } from '../utils/validateSubtask';
@@ -274,6 +275,9 @@ export default function EventoDetalle() {
         try {
           evaluacion = await checkConflict({
             date: draft.fechaObjetivo,
+            subtaskId: editingSubtaskId,
+            hours: draft.horasEstimadas,
+            status: draft.estado,
           });
         } catch (error) {
           setSubmitError(`No se pudo verificar la capacidad del día. ${error?.message || 'Intenta nuevamente.'}`);
@@ -597,7 +601,7 @@ export default function EventoDetalle() {
           onRestore={restoreOriginalSubtask}
           draftRecovered={draftRecovered}
           onReprogram={openReprogram}
-          reprogramId={reprogramId}
+          reprogramId={null}
           reprogramFecha={reprogramFecha}
           reprogramError={reprogramError}
           reprogramSubmitError={reprogramSubmitError}
@@ -615,6 +619,8 @@ export default function EventoDetalle() {
           onReprogramSubmit={handleReprogramSubmit}
         />
       </div>
+
+      {reprogramId && <ReprogramarModal key={reprogramId} item={subtasks.find((item) => item.id === reprogramId)} eventName={eventData.titulo} maxDate={eventData.fecha} onClose={cancelReprogram} onSaved={() => { cancelReprogram(); setNotice('Gestión reprogramada correctamente. Cambios guardados.'); refrescarSubtasks(); }} />}
 
       <ConfirmDialog
         open={eventDeleteOpen}
