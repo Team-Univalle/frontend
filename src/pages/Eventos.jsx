@@ -39,19 +39,8 @@ export default function Eventos() {
   }, []);
 
   useEffect(() => {
-    let ignore = false;
-    getEvents()
-      .then((response) => {
-        if (!ignore) setEvents(Array.isArray(response) ? response : response?.results ?? []);
-      })
-      .catch((error) => {
-        if (!ignore) setLoadError(error?.message || 'No fue posible cargar los eventos.');
-      })
-      .finally(() => {
-        if (!ignore) setLoading(false);
-      });
-    return () => { ignore = true; };
-  }, []);
+    loadEvents();
+  }, [loadEvents]);
 
   function requestDelete(event) {
     setEventToDelete(event);
@@ -75,23 +64,33 @@ export default function Eventos() {
 
   return (
     <main className="page-container">
-    <header className="page-header">
-      <div>
-        <h1 className="page-header__title">Eventos</h1>
-        <p className="page-header__subtitle">Administra tus eventos y su plan logístico.</p>
-      </div>
-      <button className="boton-crear-evento" onClick={() => navigate('/crear')}>
-        + Crear evento
-      </button>
-    </header>
+      <header className="page-header">
+        <div>
+          <h1 className="page-header__title">Eventos</h1>
+          <p className="page-header__subtitle">Administra tus eventos y su plan logístico.</p>
+        </div>
+        <button className="boton-crear-evento" onClick={() => navigate('/crear')}>
+          + Crear evento
+        </button>
+      </header>
 
-      {notice && <div className="eventos-notice" role="status"><span>{notice}</span><button type="button" onClick={() => setNotice('')} aria-label="Cerrar mensaje">×</button></div>}
+      {notice && (
+        <div className="eventos-notice" role="status">
+          <span>{notice}</span>
+          <button type="button" onClick={() => setNotice('')} aria-label="Cerrar mensaje">×</button>
+        </div>
+      )}
 
-      {loading && <div className="eventos-state" role="status"><span className="eventos-spinner" /> Cargando eventos...</div>}
+      {loading && (
+        <div className="eventos-state" role="status">
+          <span className="eventos-spinner" /> Cargando eventos...
+        </div>
+      )}
 
       {!loading && loadError && (
         <div className="eventos-state eventos-state--error" role="alert">
-          <p>{loadError}</p><button type="button" onClick={loadEvents}>Reintentar</button>
+          <p>{loadError}</p>
+          <button type="button" onClick={loadEvents}>Reintentar</button>
         </div>
       )}
 
@@ -100,7 +99,9 @@ export default function Eventos() {
           <span className="eventos-empty-icon"><CalendarDays size={26} /></span>
           <h2>Aún no tienes eventos</h2>
           <p>Crea tu primer evento para comenzar a organizar sus gestiones.</p>
-          <button type="button" onClick={() => navigate('/crear')}><Plus size={16} /> Crear evento</button>
+          <button type="button" onClick={() => navigate('/crear')}>
+            <Plus size={16} /> Crear evento
+          </button>
         </div>
       )}
 
@@ -108,13 +109,22 @@ export default function Eventos() {
         <section className="eventos-grid" aria-label="Lista de eventos">
           {events.map((event) => (
             <article className="evento-card" key={event.id}>
-              <div className="evento-card__top"><span>{event.tipo || 'Evento'}</span><time>{formatDate(event.fecha)}</time></div>
+              <div className="evento-card__top">
+                <span>{event.tipo || 'Evento'}</span>
+                <time>{formatDate(event.fecha)}</time>
+              </div>
               <h2>{event.titulo}</h2>
               <p><MapPin size={14} aria-hidden="true" /> {event.lugar || 'Lugar sin definir'}</p>
               <div className="evento-card__actions">
-                <button type="button" onClick={() => navigate(`/evento/${event.id}`, { state: { event } })}>Ver detalle</button>
-                <button type="button" onClick={() => navigate(`/evento/${event.id}`, { state: { event, edit: true } })}><Pencil size={15} /> Editar</button>
-                <button className="evento-card__delete" type="button" onClick={() => requestDelete(event)} aria-label={`Eliminar ${event.titulo}`}><Trash2 size={16} /></button>
+                <button type="button" onClick={() => navigate(`/evento/${event.id}`, { state: { event } })}>
+                  Ver detalle
+                </button>
+                <button type="button" onClick={() => navigate(`/evento/${event.id}`, { state: { event, edit: true } })}>
+                  <Pencil size={15} /> Editar
+                </button>
+                <button className="evento-card__delete" type="button" onClick={() => requestDelete(event)} aria-label={`Eliminar ${event.titulo}`}>
+                  <Trash2 size={16} />
+                </button>
               </div>
             </article>
           ))}
