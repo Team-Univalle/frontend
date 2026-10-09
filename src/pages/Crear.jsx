@@ -25,7 +25,7 @@ export default function Crear() {
     tipo: '',
     fecha: '',
     hora: '',
-    limite: '',
+    limite: '6',
     lugar: '',
   });
   const [logisticsItems, setLogisticsItems] = useState([
