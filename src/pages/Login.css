@@ -67,7 +67,7 @@
   padding: clamp(16px, 4vw, 48px);
   box-sizing: border-box;
   color-scheme: light;
-  position: relative; /* Clave para contener elementos flotantes o absolutos si los hay */
+  position: relative;
 }
 
 .login-form-container {
@@ -95,8 +95,8 @@
   font-weight: 400;
 }
 
-/* Estilos de los inputs y campos */
-.form-grid {
+/* Estilos de los inputs y campos (con .login-form-container antepuesto) */
+.login-form-container .form-grid {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -105,7 +105,7 @@
   box-sizing: border-box;
 }
 
-.field {
+.login-form-container .field {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -113,14 +113,14 @@
   box-sizing: border-box;
 }
 
-.field label {
+.login-form-container .field label {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
   color: #334155;
 }
 
-.field input {
+.login-form-container .field input {
   width: 100%;
   min-height: 44px;
   padding: 12px 16px;
@@ -134,23 +134,22 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.field input:focus {
+.login-form-container .field input:focus {
   border-color: #4f46e5;
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
-.field input[aria-invalid='true'] {
+.login-form-container .field input[aria-invalid='true'] {
   border-color: #c62828;
 }
 
-.field-error {
+.login-form-container .field-error {
   color: #c62828;
   font-size: 0.85rem;
   margin-top: 4px;
 }
 
-/* Corrección del error general para que ocupe todo el ancho y se vea estético */
-.general-error {
+.login-form-container .general-error {
   background: #fdecea;
   color: #c62828;
   border: 1px solid #f5c6cb;
@@ -162,7 +161,7 @@
   margin-bottom: 20px;
 }
 
-.form-actions {
+.login-form-container .form-actions {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -171,7 +170,7 @@
   box-sizing: border-box;
 }
 
-.boton-guardado {
+.login-form-container .boton-guardado {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -190,11 +189,11 @@
   transition: background-color 0.2s;
 }
 
-.boton-guardado:hover {
+.login-form-container .boton-guardado:hover {
   background-color: #4338ca;
 }
 
-.boton-guardado:disabled {
+.login-form-container .boton-guardado:disabled {
   opacity: 0.65;
   cursor: not-allowed;
 }

@@ -3,6 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { getHoyData } from '../services/hoyService';
 import './Hoy.css';
 
+const FILTROS_KEY = 'hoy:filtros';
+
+function leerFiltros() {
+  try {
+    return JSON.parse(sessionStorage.getItem(FILTROS_KEY)) ?? {};
+  } catch {
+    return {};
+  }
+}
+
 export default function Hoy() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
@@ -10,9 +20,9 @@ export default function Hoy() {
   const [error, setError] = useState(null);
 
   // Estados para los filtros
-  const [filtroCategoria, setFiltroCategoria] = useState('todos'); // 'todos', 'vencidas', 'hoy', 'proximas'
-  const [filtroEstado, setFiltroEstado] = useState('todos');       // 'todos', 'pendiente', etc.
-  const [filtroEvento, setFiltroEvento] = useState('todos');       // 'todos' o el nombre del evento seleccionado
+  const [filtroCategoria, setFiltroCategoria] = useState(() => leerFiltros().categoria ?? 'todos');
+  const [filtroEstado, setFiltroEstado] = useState(() => leerFiltros().estado ?? 'todos');
+  const [filtroEvento, setFiltroEvento] = useState(() => leerFiltros().evento ?? 'todos');
 
   const cargarDatosHoy = async () => {
     setLoading(true);
@@ -29,8 +39,15 @@ export default function Hoy() {
   };
 
   useEffect(() => {
-    cargarDatosHoy();
-  }, []);
+    try {
+      sessionStorage.setItem(
+        FILTROS_KEY,
+        JSON.stringify({ categoria: filtroCategoria, estado: filtroEstado, evento: filtroEvento })
+      );
+    } catch {
+      /* sin almacenamiento */
+    }
+  }, [filtroCategoria, filtroEstado, filtroEvento]);
 
   // C4: ESTADO DE CARGA
   if (loading) {
@@ -48,12 +65,12 @@ export default function Hoy() {
   if (error) {
     return (
       <main className="hoy-principal">
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '60px 20px', 
-          background: '#ffffff', 
-          borderRadius: '12px', 
-          border: '1px solid #e2e8f0', 
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          background: '#ffffff',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
           maxWidth: '600px',
           margin: '40px auto'
@@ -65,15 +82,15 @@ export default function Hoy() {
           <p style={{ color: '#64748b', marginBottom: '24px', fontSize: '14px' }}>
             {error}
           </p>
-          <button 
+          <button
             onClick={cargarDatosHoy}
-            style={{ 
-              background: '#6366f1', 
-              color: '#fff', 
-              border: 'none', 
-              padding: '10px 24px', 
-              borderRadius: '8px', 
-              cursor: 'pointer', 
+            style={{
+              background: '#6366f1',
+              color: '#fff',
+              border: 'none',
+              padding: '10px 24px',
+              borderRadius: '8px',
+              cursor: 'pointer',
               fontWeight: '500',
               fontSize: '14px',
               transition: 'background 0.2s'
@@ -93,25 +110,26 @@ export default function Hoy() {
   // Extraer una lista única de eventos de todas las tareas para llenar el selector dinámicamente
   const todasLasTareas = [...vencidasOriginales, ...paraHoyOriginales, ...proximasOriginales];
   const eventosDisponibles = Array.from(new Set(todasLasTareas.map(t => t.event_name).filter(Boolean)));
+  const eventoActivo = eventosDisponibles.includes(filtroEvento) ? filtroEvento : 'todos';
 
   // Lógica de filtrado combinada (Categoría + Estado + Evento)
   const filtrarTarea = (t) => {
     const coincideEstado = filtroEstado === 'todos' || t.status?.toLowerCase() === filtroEstado.toLowerCase();
-    const coincideEvento = filtroEvento === 'todos' || t.event_name === filtroEvento;
+    const coincideEvento = eventoActivo === 'todos' || t.event_name === eventoActivo;
     return coincideEstado && coincideEvento;
   };
 
   // Filtrar según la categoría y los demás criterios
-  const vencidas = (filtroCategoria === 'todos' || filtroCategoria === 'vencidas') 
-    ? vencidasOriginales.filter(filtrarTarea) 
+  const vencidas = (filtroCategoria === 'todos' || filtroCategoria === 'vencidas')
+    ? vencidasOriginales.filter(filtrarTarea)
     : [];
 
-  const paraHoy = (filtroCategoria === 'todos' || filtroCategoria === 'hoy') 
-    ? paraHoyOriginales.filter(filtrarTarea) 
+  const paraHoy = (filtroCategoria === 'todos' || filtroCategoria === 'hoy')
+    ? paraHoyOriginales.filter(filtrarTarea)
     : [];
 
-  const proximas = (filtroCategoria === 'todos' || filtroCategoria === 'proximas') 
-    ? proximasOriginales.filter(filtrarTarea) 
+  const proximas = (filtroCategoria === 'todos' || filtroCategoria === 'proximas')
+    ? proximasOriginales.filter(filtrarTarea)
     : [];
 
   const noHayTareas = vencidas.length === 0 && paraHoy.length === 0 && proximas.length === 0;
@@ -123,7 +141,7 @@ export default function Hoy() {
     setFiltroEvento('todos');
   };
 
-  const hayFiltrosActivos = filtroCategoria !== 'todos' || filtroEstado !== 'todos' || filtroEvento !== 'todos';
+  const hayFiltrosActivos = filtroCategoria !== 'todos' || filtroEstado !== 'todos' || eventoActivo !== 'todos';
 
   return (
     <main className="hoy-principal">
@@ -131,7 +149,6 @@ export default function Hoy() {
       <div className="hoy-header-container">
         <div className="hoy-titulo-area">
           <h1>Hoy</h1>
-          <br />
           <p>{data?.fechaTexto || new Date().toLocaleDateString()}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -158,8 +175,8 @@ export default function Hoy() {
           </div>
         </div>
         <div className="barra-progreso-bg">
-          <div 
-            className="barra-progreso-fill" 
+          <div
+            className="barra-progreso-fill"
             style={{ width: `${data?.capacidad?.porcentaje || 0}%` }}
           ></div>
         </div>
@@ -168,19 +185,19 @@ export default function Hoy() {
       {/* Filtros Interactivos (Sin el botón "Todos los eventos") */}
       <div className="filtros-container" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div className="filtros-grupo" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <button 
+          <button
             className={`filtro-pill ${filtroCategoria === 'hoy' ? 'active' : ''}`}
             onClick={() => setFiltroCategoria(filtroCategoria === 'hoy' ? 'todos' : 'hoy')}
           >
             Solo para hoy
           </button>
-          <button 
+          <button
             className={`filtro-pill ${filtroCategoria === 'vencidas' ? 'active' : ''}`}
             onClick={() => setFiltroCategoria(filtroCategoria === 'vencidas' ? 'todos' : 'vencidas')}
           >
             Solo vencidas
           </button>
-          <button 
+          <button
             className={`filtro-pill ${filtroCategoria === 'proximas' ? 'active' : ''}`}
             onClick={() => setFiltroCategoria(filtroCategoria === 'proximas' ? 'todos' : 'proximas')}
           >
@@ -188,8 +205,8 @@ export default function Hoy() {
           </button>
 
           {/* Selector de Evento */}
-          <select 
-            value={filtroEvento} 
+          <select
+            value={eventoActivo}
             onChange={(e) => setFiltroEvento(e.target.value)}
             style={{
               padding: '6px 12px',
@@ -209,7 +226,7 @@ export default function Hoy() {
               </option>
             ))}
           </select>
-          
+
           {/* Botón de limpiar filtros */}
           {hayFiltrosActivos && (
             <button className="filtro-pill filtro-limpiar" onClick={limpiarFiltros}>
@@ -217,7 +234,7 @@ export default function Hoy() {
             </button>
           )}
         </div>
-        
+
         <div className="regla-banner" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '10px 14px', borderRadius: '8px', maxWidth: '380px', fontSize: '12px', color: '#475569', textAlign: 'justify' }}>
           <strong>Criterio de orden:</strong> Las gestiones urgentes y vencidas se atienden primero. Luego las programadas para hoy y finalmente las próximas. En caso de empate en fecha, se priorizan las de menor esfuerzo.
         </div>

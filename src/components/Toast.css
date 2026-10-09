@@ -9,6 +9,15 @@
   gap: 12px;
   align-items: center;
   z-index: 1000;
+  font-family: inherit;
+  font-size: 14px;
 }
-.toast--success { background: #2e7d32; }
-.toast--error { background: #f16868; }
+
+
+.toast-success { 
+  background-color: #2e7d32; 
+}
+
+.toast-error { 
+  background-color: #f16868; 
+}
