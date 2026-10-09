@@ -151,13 +151,12 @@ export default function Crear() {
 
   return (
     <main className="page-container">
-    <header className="page-header">
-      <div>
-        <h1 className="page-header__title">Crear Evento</h1>
-        <p className="page-header__subtitle">Formulario de creación</p>
-      </div>
-      
-    </header>
+      <header className="page-header">
+        <div>
+          <h1 className="page-header__title">Crear Evento</h1>
+          <p className="page-header__subtitle">Formulario de creación de nuevos proyectos</p>
+        </div>
+      </header>
 
       <section className="forms" aria-label="Crear evento">
         <p>Datos del evento</p>
