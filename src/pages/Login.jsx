@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, registerUser } from '../services/authService';
 import Toast from '../components/Toast';
@@ -10,10 +10,20 @@ export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  
+
   const [fieldErrors, setFieldErrors] = useState({});
   const [generalError, setGeneralError] = useState('');
   const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (generalError) {
+      const timer = setTimeout(() => {
+        setGeneralError('');
+      }, 5000); // 5000 ms = 5 segundos
+
+      return () => clearTimeout(timer); // Limpia el temporizador si el componente se desmonta o cambia el error
+    }
+  }, [generalError]);
 
   function handleChange(e) {
     const { name, value } = e.target;

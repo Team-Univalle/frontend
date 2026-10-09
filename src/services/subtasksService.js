@@ -57,3 +57,11 @@ export async function updateSubtask(subtaskId, subtaskData) {
 export async function deleteSubtask(subtaskId) {
   await apiClient(`/subtasks/${subtaskId}`, { method: 'DELETE' });
 }
+
+export async function rescheduleSubtask(subtaskId, fechaObjetivo) {
+  const response = await apiClient(`/subtasks/${subtaskId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ target_date: fechaObjetivo }),
+  });
+  return normalizeSubtask(response);
+}

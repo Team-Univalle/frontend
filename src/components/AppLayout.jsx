@@ -1,15 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   CalendarCheck2,
   ChartNoAxesColumnIncreasing,
   Home,
   ListChecks,
+  Pencil,
   Plus,
   LogOut,
 } from 'lucide-react';
+import LimiteDiarioModal from './LimiteDiarioModal';
+import Toast from './Toast';
 import { getCurrentUser, logoutUser } from '../services/authService';
+import { getHoyData } from '../services/hoyService';
+import { getDailyLimit } from '../services/limitService';
+import { LIMITE_POR_DEFECTO, formatHoras, textoHoras } from '../utils/limite';
 import './AppLayout.css';
+import './CapacidadDiaria.css';
 
 const links = [
   { to: '/hoy', label: 'Hoy', icon: Home },
@@ -23,6 +30,12 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
 
+  const [limite, setLimite] = useState(LIMITE_POR_DEFECTO);
+  const [programadasHoy, setProgramadasHoy] = useState(null);
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [recienActualizado, setRecienActualizado] = useState(false);
+
   useEffect(() => {
     getCurrentUser()
       .then((data) => {
@@ -33,15 +46,56 @@ export default function AppLayout() {
       });
   }, []);
 
+  // Límite guardado + horas programadas hoy (las páginas pueden volver a pedirlo con refrescarCapacidad)
+  const cargarCapacidad = useCallback(async () => {
+    const [limiteResult, hoyResult] = await Promise.allSettled([getDailyLimit(), getHoyData()]);
+    if (limiteResult.status === 'fulfilled') {
+      setLimite(limiteResult.value.limite ?? LIMITE_POR_DEFECTO);
+    }
+    if (hoyResult.status === 'fulfilled') {
+      const horas = Number(hoyResult.value?.capacidad?.horasOcupadas);
+      setProgramadasHoy(Number.isFinite(horas) ? horas : 0);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarCapacidad();
+  }, [cargarCapacidad]);
+
+  useEffect(() => {
+    if (!recienActualizado) return undefined;
+    const timer = setTimeout(() => setRecienActualizado(false), 4000);
+    return () => clearTimeout(timer);
+  }, [recienActualizado]);
+
+  const cerrarToast = useCallback(() => setToast(null), []);
+
+  function handleLimiteGuardado(nuevoLimite) {
+    setLimite(nuevoLimite);
+    setModalAbierto(false);
+    setRecienActualizado(true);
+    setToast({
+      id: Date.now(),
+      type: 'success',
+      message: `Límite diario actualizado. Ahora es de ${textoHoras(nuevoLimite)} por día.`,
+    });
+  }
+
   const handleLogout = () => {
     logoutUser();
     navigate('/login', { replace: true });
   };
 
   // Obtener nombre e iniciales de forma segura según los campos de tu ProfileSerializer
-  const rawNombre = user?.nombre || user?.first_name || user?.email || 'Usuario';
+  const rawNombre = user?.name || user?.first_name || user?.email || 'Usuario';
   const nombreUsuario = rawNombre.includes('@') ? rawNombre.split('@')[0] : rawNombre;
   const inicialUsuario = user?.iniciales || nombreUsuario.charAt(0).toUpperCase();
+
+  const hayDato = Number.isFinite(programadasHoy);
+  const exceso = hayDato ? programadasHoy - limite : 0;
+  const justo = hayDato && Math.abs(exceso) < 1e-9;
+  const sobrepasa = hayDato && exceso > 1e-9;
+  const porcentaje = hayDato ? Math.min(100, (programadasHoy / limite) * 100) : 0;
 
   return (
     <div className="app-shell">
@@ -73,43 +127,67 @@ export default function AppLayout() {
           ))}
         </nav>
 
-        <div className="app-capacidad">
-          <span>Capacidad diaria</span>
-          <strong>6 horas</strong>
-          <progress value="6" max="8" aria-label="Capacidad diaria" />
-          <small>6 h programadas hoy</small>
-        </div>
+        <section
+          className={`capacidad-diaria${recienActualizado ? ' is-updated' : ''}`}
+          aria-label="Capacidad diaria"
+        >
+          <h2 className="capacidad-diaria__titulo">Capacidad diaria</h2>
+          <p className="capacidad-diaria__horas">
+            <strong>{hayDato ? `${formatHoras(programadasHoy)} h` : '—'}</strong> programadas hoy
+          </p>
+          <div
+            className={`capacidad-diaria__barra${sobrepasa ? ' is-over' : ''}`}
+            role="progressbar"
+            aria-label="Horas programadas hoy"
+            aria-valuemin={0}
+            aria-valuemax={limite}
+            aria-valuenow={hayDato ? Math.min(programadasHoy, limite) : 0}
+          >
+            <span style={{ width: `${porcentaje}%` }} />
+          </div>
+          <p className={`capacidad-diaria__limite${recienActualizado ? ' is-strong' : ''}`}>
+            Tu límite: {textoHoras(limite)} por día
+          </p>
+          {justo && <p className="capacidad-diaria__nota">Hoy llegas justo a tu límite.</p>}
+          {sobrepasa && (
+            <p className="capacidad-diaria__nota capacidad-diaria__nota--alerta">
+              Hoy superas tu límite por {formatHoras(exceso)} h.
+            </p>
+          )}
+          <button
+            type="button"
+            className="capacidad-diaria__boton"
+            onClick={() => setModalAbierto(true)}
+          >
+            <Pencil size={15} aria-hidden="true" /> Cambiar límite
+          </button>
+        </section>
 
         {/* Botón de Cierre de Sesión al final */}
         <div style={{ marginTop: 'auto', padding: '10px 0' }}>
-          <button 
-            type="button" 
-            onClick={handleLogout}
-            className="app-logout-btn"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              width: '100%',
-              padding: '10px 12px',
-              background: 'transparent',
-              border: 'none',
-              borderRadius: '6px',
-              color: 'inherit',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              fontWeight: '500',
-              textAlign: 'left',
-              transition: 'background 0.2s'
-            }}
-          >
+          <button type="button" onClick={handleLogout} className="app-logout-btn">
             <LogOut size={17} aria-hidden="true" />
             <span>Cerrar sesión</span>
           </button>
         </div>
       </aside>
 
-      <div className="app-content"><Outlet /></div>
+      <div className="app-content">
+        <Toast
+          key={toast?.id ?? 'sin-aviso'}
+          message={toast?.message}
+          type={toast?.type}
+          onClose={cerrarToast}
+        />
+        <Outlet context={{ refrescarCapacidad: cargarCapacidad, limiteDiario: limite }} />
+      </div>
+
+      <LimiteDiarioModal
+        open={modalAbierto}
+        programadasHoy={programadasHoy}
+        onClose={() => setModalAbierto(false)}
+        onSaved={handleLimiteGuardado}
+      />
     </div>
   );
 }

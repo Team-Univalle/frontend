@@ -1,5 +1,6 @@
-import { Pencil, Trash2 } from 'lucide-react';
+import { CalendarClock, Pencil, Trash2 } from 'lucide-react';
 import './PlanLogistico.css';
+import { Fragment } from 'react';
 
 function CampoSubtarea({
   item,
@@ -8,6 +9,7 @@ function CampoSubtarea({
   onChange,
   idPrefix,
   showStatus = false,
+  maxDate,
 }) {
   return (
     <>
@@ -39,6 +41,7 @@ function CampoSubtarea({
           aria-invalid={!!errors.fechaObjetivo}
           aria-describedby={errors.fechaObjetivo ? `${idPrefix}-fecha-error` : undefined}
           disabled={disabled}
+          max={maxDate || undefined}
         />
         {errors.fechaObjetivo && (
           <span id={`${idPrefix}-fecha-error`} className="field-error">
@@ -115,12 +118,31 @@ export default function PlanLogistico({
   onSubmit,
   saving = false,
   submitError = '',
+  maxDate,
+  original = null,
+  onRestore,
+  draftRecovered = false,
+  onReprogram,
+  reprogramId = null,
+  reprogramFecha = '',
+  reprogramError = '',
+  reprogramSubmitError = '',
+  reprogramSaving = false,
+  onReprogramChange,
+  onReprogramCancel,
+  onReprogramSubmit,
 }) {
   const isDetail = mode === 'detail';
   const title = isDetail ? 'Gestiones' : 'Plan logístico inicial';
   const description = isDetail
     ? 'Subtareas asociadas a este evento.'
     : 'Añade subtareas con fecha objetivo y esfuerzo mayor que cero.';
+  const cambiado = Boolean(isEditing && original && draft) && (
+    draft.gestion !== original.gestion ||
+    draft.fechaObjetivo !== original.fechaObjetivo ||
+    String(draft.horasEstimadas) !== String(original.horasEstimadas) ||
+    draft.estado !== (original.estado || 'Pendiente')
+  );
 
   return (
     <section className="plan-logistico" aria-labelledby="plan-logistico-title">
@@ -168,7 +190,19 @@ export default function PlanLogistico({
             onChange={onDraftChange}
             idPrefix="nueva-subtarea"
             showStatus={isEditing}
+            maxDate={maxDate}
           />
+          {isEditing && original && (
+            <div className="subtarea-original">
+              <span>
+                {draftRecovered && <strong>Recuperamos tus cambios sin guardar. </strong>}
+                Original: {formatDate(original.fechaObjetivo)} · {original.horasEstimadas} h · {original.estado || 'Pendiente'}
+              </span>
+              <button type="button" onClick={onRestore} disabled={saving || !cambiado}>
+                Restaurar original
+              </button>
+            </div>
+          )}
           {submitError && (
             <div className="subtarea-submit-error" role="alert">
               {submitError}
@@ -204,27 +238,67 @@ export default function PlanLogistico({
         <div className="plan-logistico__lista">
           {items.map((item, index) =>
             isDetail ? (
-              <article className="gestion-card gestion-card--lectura" key={item.id}>
-                <div className="gestion-resumen gestion-resumen--titulo">
-                  <strong>{item.gestion}</strong>
-                  <span>Gestión logística</span>
-                </div>
-                <div className="gestion-resumen gestion-resumen--tiempo">
-                  <strong className="gestion-horas">{item.horasEstimadas} h</strong>
-                  <span>{formatDate(item.fechaObjetivo)}</span>
-                </div>
-                <span className={`gestion-estado gestion-estado--${String(item.estado || 'Pendiente').toLowerCase()}`}>
-                  {item.estado || 'Pendiente'}
-                </span>
-                <div className="gestion-card__acciones">
-                  <button type="button" onClick={() => onEdit(item)} disabled={deletingId === item.id}>
-                    <Pencil size={15} aria-hidden="true" /> Editar
-                  </button>
-                  <button className="gestion-card__eliminar" type="button" onClick={() => onDelete(item)} disabled={deletingId === item.id} aria-label={`Eliminar ${item.gestion}`}>
-                    <Trash2 size={16} aria-hidden="true" />
-                  </button>
-                </div>
-              </article>
+              <Fragment key={item.id}>
+                <article className="gestion-card gestion-card--lectura">
+                  <div className="gestion-resumen gestion-resumen--titulo">
+                    <strong>{item.gestion}</strong>
+                    <span>Gestión logística</span>
+                  </div>
+                  <div className="gestion-resumen gestion-resumen--tiempo">
+                    <strong className="gestion-horas">{item.horasEstimadas} h</strong>
+                    <span>{formatDate(item.fechaObjetivo)}</span>
+                  </div>
+                  <span className={`gestion-estado gestion-estado--${String(item.estado || 'Pendiente').toLowerCase()}`}>
+                    {item.estado || 'Pendiente'}
+                  </span>
+                  <div className="gestion-card__acciones">
+                    <button type="button" onClick={() => onReprogram(item)} disabled={deletingId === item.id || isFormOpen || reprogramId !== null}>
+                      <CalendarClock size={15} aria-hidden="true" /> Reprogramar
+                    </button>
+                    <button type="button" onClick={() => onEdit(item)} disabled={deletingId === item.id || reprogramId !== null}>
+                      <Pencil size={15} aria-hidden="true" /> Editar
+                    </button>
+                    <button className="gestion-card__eliminar" type="button" onClick={() => onDelete(item)} disabled={deletingId === item.id} aria-label={`Eliminar ${item.gestion}`}>
+                      <Trash2 size={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                </article>
+                {reprogramId === item.id && (
+                  <form className="subtarea-reprogramar" onSubmit={onReprogramSubmit} noValidate>
+                    <div className="gestion-field">
+                      <label htmlFor={`reprogramar-fecha-${item.id}`}>Nueva fecha objetivo</label>
+                      <input
+                        id={`reprogramar-fecha-${item.id}`}
+                        type="date"
+                        value={reprogramFecha}
+                        onChange={(event) => onReprogramChange(event.target.value)}
+                        max={maxDate || undefined}
+                        disabled={reprogramSaving}
+                        aria-invalid={!!reprogramError}
+                        aria-describedby={reprogramError ? `reprogramar-fecha-${item.id}-error` : undefined}
+                      />
+                      {reprogramError && (
+                        <span id={`reprogramar-fecha-${item.id}-error`} className="field-error">
+                          {reprogramError}
+                        </span>
+                      )}
+                    </div>
+                    {reprogramSubmitError && (
+                      <div className="subtarea-submit-error" role="alert">
+                        {reprogramSubmitError}
+                      </div>
+                    )}
+                    <div className="subtarea-actions">
+                      <button type="button" onClick={onReprogramCancel} disabled={reprogramSaving}>
+                        Cancelar
+                      </button>
+                      <button className="boton-guardado" type="submit" disabled={reprogramSaving}>
+                        {reprogramSaving ? 'Guardando...' : reprogramSubmitError ? 'Reintentar' : 'Guardar'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </Fragment>
             ) : (
               <div className="gestion-card" key={item.id}>
                 <span className="gestion-card__numero" aria-hidden="true">
@@ -240,6 +314,7 @@ export default function PlanLogistico({
                   disabled={disabled}
                   onChange={(field, value) => onChange(item.id, field, value)}
                   idPrefix={`subtarea-${item.id}`}
+                  maxDate={maxDate}
                 />
                 <button
                   className="boton-eliminar-gestion"

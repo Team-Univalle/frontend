@@ -10,8 +10,10 @@
 .app-sidebar {
   position: sticky;
   top: 0;
+  align-self: start;       /* <- Agrégalo (hace que el sticky funcione) */
+  height: 100svh;          /* <- Agrégalo */
+  overflow-y: auto;        /* <- Agrégalo */
   display: flex;
-  min-height: 100svh;
   flex-direction: column;
   padding: 24px 14px;
   box-sizing: border-box;
@@ -57,4 +59,21 @@
   .app-nav a { justify-content: center; padding: 9px 6px; }
   .app-nav a span { display: none; }
   .app-capacidad { display: none; }
+}
+
+
+.app-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: auto;
+  padding: 10px 12px;
+  border: 1px solid #3a4565;
+  border-radius: 8px;
+  color: #e2e8f0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
 }
