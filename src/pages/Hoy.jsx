@@ -301,7 +301,7 @@ export default function Hoy() {
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
                       <span className="badge-alerta-tiempo">{t.target_date}</span>
                     </div>
-                    <span>{t.status}</span><Link to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
+                    <span>{t.status}</span><Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -328,7 +328,7 @@ export default function Hoy() {
                         {t.status}
                       </span>
                     </div>
-                    <Link to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
+                    <Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -353,7 +353,7 @@ export default function Hoy() {
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
                       <span className="badge-etiqueta">{t.target_date}</span>
                     </div>
-                    <span>{t.status}</span><Link to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
+                    <span>{t.status}</span><Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
