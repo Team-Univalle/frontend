@@ -48,15 +48,17 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
   const [tocado, setTocado] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
+  const [fieldError, setFieldError] = useState('');
   const enCurso = useRef(false);
   const solicitud = useRef(0);
 
   const cargar = useCallback(async () => {
     const id = ++solicitud.current;
+    const token = localStorage.getItem('token');
     setEstado('cargando');
     try {
       const { limite } = await getDailyLimit();
-      if (id !== solicitud.current) return;
+      if (id !== solicitud.current || token !== localStorage.getItem('token')) return;
       setGuardado(limite);
       setValor(String(limite ?? LIMITE_POR_DEFECTO));
       setEstado('listo');
@@ -66,16 +68,23 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
     }
   }, []);
 
+  const invalidateRequest = useCallback(() => { solicitud.current++; }, []);
   useEffect(() => {
     if (!open) return;
-    setTocado(false);
-    setSaveError(false);
-    setSaving(false);
-    cargar();
-  }, [open, cargar]);
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setTocado(false);
+      setSaveError(false);
+      setFieldError('');
+      setSaving(false);
+      cargar();
+    });
+    return () => { active = false; invalidateRequest(); };
+  }, [open, cargar, invalidateRequest]);
 
   const error = validarLimite(valor);
-  const mostrarError = tocado && error;
+  const mostrarError = fieldError || (tocado && error);
   const hayProgramadas = Number.isFinite(programadasHoy);
   const preview =
     estado === 'listo' && !error && hayProgramadas && (guardado !== null || tocado)
@@ -91,11 +100,16 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
     enCurso.current = true;
     setSaving(true);
     setSaveError(false);
+    setFieldError('');
+    const token = localStorage.getItem('token');
     try {
       const { limite } = await saveDailyLimit(aNumero(valor));
+      if (token !== localStorage.getItem('token')) return;
       onSaved(limite);
-    } catch {
-      setSaveError(true);
+    } catch (err) {
+      const message = err?.data?.fields?.daily_limit_hours;
+      if (message) setFieldError(Array.isArray(message) ? message.join(' ') : message);
+      setSaveError(err.message || 'Intenta nuevamente.');
     } finally {
       enCurso.current = false;
       setSaving(false);
@@ -106,6 +120,7 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
     setValor(event.target.value);
     setTocado(true);
     setSaveError(false);
+    setFieldError('');
   }
 
   let footer;
@@ -171,6 +186,7 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
           {saveError && (
             <div className="limite-banner limite-banner--error" role="alert">
               <strong>No pudimos guardar tu límite diario</strong>
+              <p>{saveError}</p>
               <p>
                 Tu valor de {formatHoras(aNumero(valor))} horas sigue aquí. Revisa tu conexión e
                 inténtalo de nuevo.
@@ -213,7 +229,7 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
 
             {mostrarError ? (
               <p id={mensajeId} className="limite-error" role="alert">
-                <AlertCircle size={16} aria-hidden="true" /> {error}
+                <AlertCircle size={16} aria-hidden="true" /> {mostrarError}
               </p>
             ) : saving ? (
               <p id={mensajeId} className="limite-guardando" role="status">

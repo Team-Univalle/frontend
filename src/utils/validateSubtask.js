@@ -11,11 +11,19 @@ export function validateSubtask({ gestion, fechaObjetivo, horasEstimadas }, fech
   } else if (fechaEvento && fechaObjetivo > fechaEvento) {
     errors.fechaObjetivo = 'No puede ser posterior a la fecha del evento.';
   }
-  if (!horasEstimadas || Number(horasEstimadas) <= 0) {
-    errors.horasEstimadas = 'Las horas deben ser mayores que 0.';
-  }
+  const errorHoras = validateHours(horasEstimadas);
+  if (errorHoras) errors.horasEstimadas = errorHoras;
 
   return errors;
+}
+
+// DecimalField del BE: max_digits=5, decimal_places=2.
+export function validateHours(value) {
+  const text = String(value ?? '').trim();
+  const number = Number(text);
+  if (!text || !Number.isFinite(number) || number <= 0) return 'Las horas deben ser un número finito mayor que 0.';
+  if (number > 999.99 || !/^\d+(\.\d{1,2})?$/.test(text)) return 'Usa como máximo 999.99 horas y 2 decimales.';
+  return '';
 }
 
 export function validateFechaObjetivo(fecha, fechaEvento) {

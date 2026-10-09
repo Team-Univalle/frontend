@@ -21,6 +21,7 @@ import {
   updateSubtask,
 } from '../services/subtasksService';
 import { checkConflict } from '../services/conflictsService';
+import { notifyPlanningUpdated } from '../services/planningEvents';
 import { validateEvent } from '../utils/validateEvent';
 import { validateSubtask, validateFechaObjetivo } from '../utils/validateSubtask';
 import './EventoDetalle.css';
@@ -117,6 +118,7 @@ export default function EventoDetalle() {
   const [reprogramSaving, setReprogramSaving] = useState(false);
   const [reprogramConflict, setReprogramConflict] = useState(null);
   const reprogramEnCurso = useRef(false);
+  const saveEnCurso = useRef(false);
 
   const completedSubtasks = subtasks.filter(
     (subtask) => String(subtask.estado).toLowerCase() === 'ejecutada'
@@ -248,12 +250,14 @@ export default function EventoDetalle() {
   }
   async function handleSaveSubtask(eventObject) {
     eventObject.preventDefault();
+    if (saveEnCurso.current) return;
     const errors = validateSubtask(draft, eventData?.fecha);
     if (Object.keys(errors).length > 0) {
       setDraftErrors(errors);
       return;
     }
 
+    saveEnCurso.current = true;
     setSaving(true);
     setSubmitError('');
     setConflict(null);
@@ -270,8 +274,6 @@ export default function EventoDetalle() {
         try {
           evaluacion = await checkConflict({
             date: draft.fechaObjetivo,
-            hours: Number(draft.horasEstimadas),
-            excludeSubtaskId: editingSubtaskId,
           });
         } catch (error) {
           setSubmitError(`No se pudo verificar la capacidad del día. ${error?.message || 'Intenta nuevamente.'}`);
@@ -298,7 +300,9 @@ export default function EventoDetalle() {
           : [...current, savedSubtask];
         return next.sort((a, b) => a.fechaObjetivo.localeCompare(b.fechaObjetivo));
       });
-      setNotice(editingSubtaskId ? 'Subtarea actualizada correctamente.' : 'Subtarea creada correctamente.');
+      setNotice(editingSubtaskId ? 'Cambios guardados.' : 'Subtarea creada correctamente.');
+      notifyPlanningUpdated();
+      refrescarSubtasks();
       borrarBorrador(borradorKey(id, editingSubtaskId));
       closeSubtaskForm();
     } catch (error) {
@@ -309,6 +313,7 @@ export default function EventoDetalle() {
         `${editingSubtaskId ? 'No se pudo actualizar la subtarea.' : 'No se pudo crear la subtarea.'} ${error?.message || 'Intenta nuevamente.'}`
       );
     } finally {
+      saveEnCurso.current = false;
       setSaving(false);
     }
   }
@@ -358,6 +363,11 @@ export default function EventoDetalle() {
     setReprogramSubmitError('');
     setReprogramConflict(null);
     try {
+      const evaluacion = await checkConflict({ date: reprogramFecha });
+      if (evaluacion.conflict) {
+        setReprogramConflict(evaluacion);
+        return;
+      }
       const saved = await rescheduleSubtask(reprogramId, reprogramFecha);
       if (String(saved.fechaObjetivo).slice(0, 10) !== reprogramFecha) {
         throw new Error('El servidor no confirmó la nueva fecha.');
@@ -374,10 +384,11 @@ export default function EventoDetalle() {
       setReprogramId(null);
       setReprogramFecha('');
       setNotice('Cambios guardados.');
+      notifyPlanningUpdated();
       refrescarSubtasks();
     } catch (error) {
       if (error?.status === 409) {
-        setReprogramConflict({ message: error?.message, data: error?.data ?? null });
+        setReprogramSubmitError(`El servidor rechazó la propuesta por sobrecarga. ${error.message} Cambia la fecha o reduce las horas.`);
       } else {
         if (error?.data?.fields) {
           const campos = mapSubtaskFieldErrors(error.data.fields);
@@ -592,6 +603,13 @@ export default function EventoDetalle() {
           reprogramSubmitError={reprogramSubmitError}
           reprogramSaving={reprogramSaving}
           reprogramConflict={reprogramConflict}
+          onReduceHours={() => {
+            const item = subtasks.find((task) => task.id === reprogramId);
+            const fecha = reprogramFecha;
+            cancelReprogram();
+            openEditSubtask(item);
+            setDraft(subtareaADraft({ ...item, fechaObjetivo: fecha }));
+          }}
           onReprogramChange={handleReprogramChange}
           onReprogramCancel={cancelReprogram}
           onReprogramSubmit={handleReprogramSubmit}

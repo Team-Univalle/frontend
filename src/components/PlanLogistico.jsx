@@ -1,6 +1,7 @@
 import { CalendarClock, Pencil, Trash2 } from 'lucide-react';
 import './PlanLogistico.css';
 import { Fragment } from 'react';
+import CapacityFeedback from './CapacityFeedback';
 
 function CampoSubtarea({
   item,
@@ -55,8 +56,9 @@ function CampoSubtarea({
         <input
           id={`${idPrefix}-horas`}
           type="number"
-          min="0.25"
-          step="0.25"
+          min="0.01"
+          max="999.99"
+          step="0.01"
           placeholder="Ej. 1.5"
           value={item.horasEstimadas}
           onChange={(event) => onChange('horasEstimadas', event.target.value)}
@@ -118,6 +120,9 @@ export default function PlanLogistico({
   onSubmit,
   saving = false,
   submitError = '',
+  conflict = null,
+  reprogramConflict = null,
+  onReduceHours,
   maxDate,
   original = null,
   onRestore,
@@ -203,6 +208,7 @@ export default function PlanLogistico({
               </button>
             </div>
           )}
+          <CapacityFeedback capacity={conflict} />
           {submitError && (
             <div className="subtarea-submit-error" role="alert">
               {submitError}
@@ -283,6 +289,7 @@ export default function PlanLogistico({
                         </span>
                       )}
                     </div>
+                    <CapacityFeedback capacity={reprogramConflict} onReduce={onReduceHours} />
                     {reprogramSubmitError && (
                       <div className="subtarea-submit-error" role="alert">
                         {reprogramSubmitError}
