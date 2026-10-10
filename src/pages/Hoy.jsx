@@ -3,13 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { getHoyData } from '../services/hoyService';
 import { PLANNING_UPDATED } from '../services/planningEvents';
 import { getCurrentCapacity } from '../services/conflictsService';
+import ReprogramarModal from '../components/ReprogramarModal';
+import { Link } from 'react-router-dom';
 import './Hoy.css';
 
-const FILTROS_KEY = 'hoy:filtros';
+function filtrosKey() {
+  try { return `hoy:filtros:${JSON.parse(localStorage.getItem('user'))?.id ?? 'anon'}`; }
+  catch { return 'hoy:filtros:anon'; }
+}
 
 function leerFiltros() {
   try {
-    return JSON.parse(sessionStorage.getItem(FILTROS_KEY)) ?? {};
+    return JSON.parse(sessionStorage.getItem(filtrosKey())) ?? {};
   } catch {
     return {};
   }
@@ -22,6 +27,8 @@ export default function Hoy() {
   const [error, setError] = useState(null);
   const [capacity, setCapacity] = useState(null);
   const [capacityError, setCapacityError] = useState('');
+  const [reprogramItem, setReprogramItem] = useState(null);
+  const [notice, setNotice] = useState('');
 
   // Estados para los filtros
   const [filtroCategoria, setFiltroCategoria] = useState(() => leerFiltros().categoria ?? 'todos');
@@ -46,8 +53,11 @@ export default function Hoy() {
     setCapacity(null);
     setCapacityError('');
     const date = new Date().toLocaleDateString('en-CA');
-    try { setCapacity(await getCurrentCapacity(date)); }
-    catch (err) { setCapacityError(err.message); }
+    try { 
+      setCapacity(await getCurrentCapacity(date)); 
+    } catch (err) { 
+      setCapacityError(err.message); 
+    }
   }, []);
 
   useEffect(() => {
@@ -61,7 +71,7 @@ export default function Hoy() {
   useEffect(() => {
     try {
       sessionStorage.setItem(
-        FILTROS_KEY,
+        filtrosKey(),
         JSON.stringify({ categoria: filtroCategoria, estado: filtroEstado, evento: filtroEvento })
       );
     } catch {
@@ -69,10 +79,10 @@ export default function Hoy() {
     }
   }, [filtroCategoria, filtroEstado, filtroEvento]);
 
-  // C4: ESTADO DE CARGA
+  // ESTADO DE CARGA
   if (loading) {
     return (
-      <main className="hoy-principal">
+      <main className="page-container">
         <div className="estado-carga-container" style={{ textAlign: 'center', padding: '60px' }}>
           <div className="spinner" style={{ fontSize: '24px', marginBottom: '12px' }}>⏳</div>
           <p>Cargando tus prioridades del día...</p>
@@ -81,10 +91,10 @@ export default function Hoy() {
     );
   }
 
-  // C4: ESTADO DE ERROR
+  // ESTADO DE ERROR
   if (error) {
     return (
-      <main className="hoy-principal">
+      <main className="page-container">
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
@@ -127,19 +137,16 @@ export default function Hoy() {
   const paraHoyOriginales = data?.hoy || [];
   const proximasOriginales = data?.proximas || [];
 
-  // Extraer una lista única de eventos de todas las tareas para llenar el selector dinámicamente
   const todasLasTareas = [...vencidasOriginales, ...paraHoyOriginales, ...proximasOriginales];
   const eventosDisponibles = Array.from(new Set(todasLasTareas.map(t => t.event_name).filter(Boolean)));
   const eventoActivo = eventosDisponibles.includes(filtroEvento) ? filtroEvento : 'todos';
 
-  // Lógica de filtrado combinada (Categoría + Estado + Evento)
   const filtrarTarea = (t) => {
     const coincideEstado = filtroEstado === 'todos' || t.status?.toLowerCase() === filtroEstado.toLowerCase();
     const coincideEvento = eventoActivo === 'todos' || t.event_name === eventoActivo;
     return coincideEstado && coincideEvento;
   };
 
-  // Filtrar según la categoría y los demás criterios
   const vencidas = (filtroCategoria === 'todos' || filtroCategoria === 'vencidas')
     ? vencidasOriginales.filter(filtrarTarea)
     : [];
@@ -163,23 +170,23 @@ export default function Hoy() {
 
   const hayFiltrosActivos = filtroCategoria !== 'todos' || filtroEstado !== 'todos' || eventoActivo !== 'todos';
 
+  // Cálculo corregido del porcentaje
+  const porcentajeCapacidad = capacity && capacity.daily_limit > 0 
+    ? Math.min(100, (capacity.planned_hours / capacity.daily_limit) * 100) 
+    : 0;
+
   return (
-    <main className="hoy-principal">
-      {/* Cabecera */}
-      <div className="hoy-header-container">
-        <div className="hoy-titulo-area">
-          <h1>Hoy</h1>
-          <p>{data?.fechaTexto || new Date().toLocaleDateString()}</p>
+    <main className="page-container">
+      {/* Cabecera Estándar Alineada */}
+      <header className="page-header">
+        <div>
+          <h1 className="page-header__title">Hoy</h1>
+          <p className="page-header__subtitle">{data?.fechaTexto || new Date().toLocaleDateString()}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
-            className="boton-crear-evento"
-            onClick={() => navigate('/crear')}
-          >
-            + Crear evento
-          </button>
-        </div>
-      </div>
+        <button className="boton-crear-evento" onClick={() => navigate('/crear')}>
+          + Crear evento
+        </button>
+      </header>
 
       {/* Tarjeta de Capacidad */}
       <section className="capacidad-card">
@@ -197,13 +204,18 @@ export default function Hoy() {
         <div className="barra-progreso-bg">
           <div
             className="barra-progreso-fill"
-            style={{ width: `${capacity ? Math.min(100, capacity.planned_hours / capacity.daily_limit * 100) : 0}%` }}
+            style={{ width: `${porcentajeCapacidad}%` }}
           ></div>
         </div>
-        {capacityError && <p role="alert">No pudimos cargar la capacidad. {capacityError} <button type="button" onClick={cargarCapacidad}>Reintentar</button></p>}
+        {capacityError && (
+          <p role="alert">
+            No pudimos cargar la capacidad. {capacityError}{' '}
+            <button type="button" onClick={cargarCapacidad}>Reintentar</button>
+          </p>
+        )}
       </section>
 
-      {/* Filtros Interactivos (Sin el botón "Todos los eventos") */}
+      {/* Filtros Interactivos */}
       <div className="filtros-container" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div className="filtros-grupo" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
@@ -261,7 +273,7 @@ export default function Hoy() {
         </div>
       </div>
 
-      {/* C4: ESTADO VACÍO */}
+      {/* ESTADO VACÍO */}
       {noHayTareas ? (
         <div className="estado-vacio" style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '12px', border: '1px dashed #cbd5e1', marginTop: '20px' }}>
           <div className="estado-vacio-icono" style={{ marginBottom: '12px', color: '#6366f1' }}>
@@ -270,8 +282,9 @@ export default function Hoy() {
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           </div>
-          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>¡Sin resultados con estos filtros!</h3>
-          <p style={{ color: '#64748b' }}>No hay tareas que coincidan con los filtros seleccionados.</p>
+          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>{hayFiltrosActivos ? '¡Sin resultados con estos filtros!' : 'No hay tareas programadas.'}</h3>
+          <p style={{ color: '#64748b' }}>{hayFiltrosActivos ? 'No hay tareas que coincidan con los filtros seleccionados.' : 'Hoy no tienes gestiones logísticas pendientes. ¿Quieres crear un evento?'}</p>
+          {!hayFiltrosActivos && <Link className="boton-crear-evento" to="/crear">Crear evento</Link>}
         </div>
       ) : (
         <>
@@ -293,7 +306,7 @@ export default function Hoy() {
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
                       <span className="badge-alerta-tiempo">{t.target_date}</span>
                     </div>
-                    <button className="tarea-accion-btn">{t.status}</button>
+                    <span>{t.status}</span><Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -320,7 +333,7 @@ export default function Hoy() {
                         {t.status}
                       </span>
                     </div>
-                    <button className="tarea-accion-btn">Completar</button>
+                    <Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -345,7 +358,7 @@ export default function Hoy() {
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
                       <span className="badge-etiqueta">{t.target_date}</span>
                     </div>
-                    <button className="tarea-accion-btn">{t.status}</button>
+                    <span>{t.status}</span><Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -353,6 +366,8 @@ export default function Hoy() {
           )}
         </>
       )}
+      {notice && <p role="status">{notice}</p>}
+      {reprogramItem && <ReprogramarModal key={reprogramItem.id} item={reprogramItem} onClose={() => setReprogramItem(null)} onSaved={() => { setReprogramItem(null); setNotice('Gestión reprogramada correctamente. Cambios guardados.'); }} />}
     </main>
   );
 }

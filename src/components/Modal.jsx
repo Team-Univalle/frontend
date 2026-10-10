@@ -14,6 +14,7 @@ export default function Modal({
   className = '',
   children,
   footer = null,
+  role = 'dialog',
 }) {
   const titleId = useId();
   const dialogRef = useRef(null);
@@ -86,7 +87,7 @@ export default function Modal({
       <div
         ref={dialogRef}
         className={`modal ${className}`.trim()}
-        role="dialog"
+        role={role}
         aria-modal="true"
         aria-labelledby={titleId}
         aria-busy={busy || undefined}

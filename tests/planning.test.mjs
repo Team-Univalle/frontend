@@ -15,21 +15,22 @@ function respond(data, status = 200) {
 }
 
 test('7 horas guardadas frente a 6 muestra el conflicto y mensaje del servidor', async () => {
-  const data = { conflict: true, planned_hours: 7, daily_limit: 6, message: 'Exceso: 1 hora.' };
+  const data = { conflict: true, planned_hours: 5, task_hours: 2, total_hours: 7, excess: 1, daily_limit: 6, message: 'Exceso: 1 hora.' };
   respond(data);
-  assert.deepEqual(await checkConflict({ date: '2026-10-10', hours: 2, excludeSubtaskId: 'task-1' }), data);
-  assert.equal(new URL(calls[0].url).search, '?date=2026-10-10');
+  assert.deepEqual(await checkConflict({ date: '2026-10-10', hours: 2, subtaskId: 'task-1' }), data);
+  assert.equal(new URL(calls[0].url).searchParams.get('estimated_hours'), '2');
+  assert.equal(new URL(calls[0].url).searchParams.get('subtask_id'), 'task-1');
   assert.equal(calls[0].options.headers.Authorization, 'Bearer test-token');
 });
 test('6 horas guardadas frente a 6 usa false del servidor', async () => {
-  respond({ conflict: false, planned_hours: 6, daily_limit: 6 });
+  respond({ conflict: false, planned_hours: 4, task_hours: 2, total_hours: 6, excess: 0, daily_limit: 6 });
   assert.equal((await checkConflict({ date: '2026-10-10', hours: 2 })).conflict, false);
 });
-test('no inventa la evaluación de una reducción que la API no soporta', async () => {
-  respond({ conflict: false, planned_hours: 5, daily_limit: 6 });
+test('reducción usa el total evaluado por el servidor', async () => {
+  respond({ conflict: false, planned_hours: 5, task_hours: 1, total_hours: 6, excess: 0, daily_limit: 6 });
   const data = await checkConflict({ date: '2026-10-10', hours: 1 });
   assert.equal(data.planned_hours, 5);
-  assert.equal(data.total_hours, undefined);
+  assert.equal(data.total_hours, 6);
   assert.equal(new URL(calls[0].url).searchParams.has('hours'), false);
 });
 test('una respuesta sin límite no se considera válida', async () => {
@@ -39,7 +40,7 @@ test('una respuesta sin límite no se considera válida', async () => {
 test('fallo controlado y reintento de la misma propuesta', async () => {
   respond({ error: 'Error controlado' }, 500);
   await assert.rejects(checkConflict({ date: '2026-10-10', hours: 1 }), /Error controlado/);
-  respond({ conflict: false, planned_hours: 5, daily_limit: 6 });
+  respond({ conflict: false, planned_hours: 5, task_hours: 1, total_hours: 6, excess: 0, daily_limit: 6 });
   assert.equal((await checkConflict({ date: '2026-10-10', hours: 1 })).planned_hours, 5);
 });
 test('horas inválidas y precisión del DecimalField', () => {
@@ -50,10 +51,10 @@ test('GET devuelve el límite personal sin sustituirlo por 6', async () => {
   respond({ daily_limit_hours: 4 });
   assert.deepEqual(await getDailyLimit(), { limite: 4 });
 });
-test('guardar usa PATCH y luego GET confirma persistencia del contrato', async () => {
+test('guardar usa PUT y luego GET confirma el contrato', async () => {
   respond({ daily_limit_hours: 4 });
   assert.deepEqual(await saveDailyLimit(4), { limite: 4 });
-  assert.equal(calls[0].options.method, 'PATCH');
+  assert.equal(calls[0].options.method, 'PUT');
   assert.deepEqual(JSON.parse(calls[0].options.body), { daily_limit_hours: 4 });
   assert.deepEqual(await getDailyLimit(), { limite: 4 });
 });
@@ -66,7 +67,14 @@ test('GET incompleto es un error, no una configuración predeterminada', async (
   respond({});
   await assert.rejects(getDailyLimit(), /no informó/);
 });
+
+test('límite nulo y guardado sin confirmación no anuncian éxito', async () => {
+  respond({ daily_limit_hours: null });
+  await assert.rejects(getDailyLimit, /límite válido/);
+  globalThis.fetch = async () => new Response(null, { status: 204 });
+  await assert.rejects(() => saveDailyLimit(4), /no confirmó/);
+});
 test('capacidad guardada utiliza planned_hours del servidor', async () => {
-  respond({ conflict: false, planned_hours: 5, daily_limit: 8 });
+  respond({ conflict: false, planned_hours: 5, task_hours: 0, total_hours: 5, excess: 0, daily_limit: 8 });
   assert.equal((await getCurrentCapacity('2026-10-10')).planned_hours, 5);
 });

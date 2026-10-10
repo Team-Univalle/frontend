@@ -415,3 +415,26 @@
   font-size: 14px;
   color: #6b7280;
 }
+
+/* Mismo botón de detalle que en las tarjetas de Eventos, conservando el enlace. */
+.tarea-detalle-link {
+  display: inline-flex;
+  min-height: 38px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border-color: #cfd3ff;
+  color: #4f46e5;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tarea-detalle-link:focus-visible {
+  outline: 2px solid #4f46e5;
+  outline-offset: 3px;
+}

@@ -103,18 +103,41 @@ export default function Login() {
       {/* Panel Izquierdo (Oscuro con Branding y Frase) */}
       <aside className="login-sidebar">
         <div className="sidebar-top">
+          <div className="brand-badge">✨ Event Planning Platform</div>
           <h1>Organiza</h1>
-          <br></br>
-          <p>Tus eventos bajo control, incluso cuando cambian los planes.</p>
+          <p>Tus proyectos y entregables bajo control, incluso cuando cambian los planes a última hora.</p>
         </div>
 
+        {/* Tarjetas informativas de valor */}
+        <div className="sidebar-features">
+          <div className="feature-item">
+            <span className="feature-icon">📅</span>
+            <div>
+              <strong>Control de Cronogramas</strong>
+              <p>Visualiza proveedores y entregas en un solo lugar.</p>
+            </div>
+          </div>
+          <div className="feature-item">
+            <span className="feature-icon">⚡</span>
+            <div>
+              <strong>Alertas Prioritarias</strong>
+              <p>Entérate en segundos de lo que requiere atención hoy.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Tarjeta de testimonio estilizada */}
         <div className="sidebar-quote-card">
+          <div className="quote-header">
+            <div className="avatar">VA</div>
+            <div>
+              <strong>Valeria Arango</strong>
+              <span>Directora de Eventos</span>
+            </div>
+          </div>
           <blockquote>
-            “En segundos quiero saber qué requiere atención hoy.”
+            “En segundos puedo saber el estado de mis tareas sin llamadas interminables.”
           </blockquote>
-          <span>
-            Diseñado para organizadores que coordinan proveedores, clientes y múltiples fechas a la vez.
-          </span>
         </div>
       </aside>
 
