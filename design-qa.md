@@ -1,54 +1,21 @@
-# Design QA — edición y eliminación de eventos y subtareas
+# QA visual Sprint 3
 
-- Source visual truth: `C:\Users\Ideapad\AppData\Local\Temp\codex-clipboard-c68ac73d-9027-48d0-a163-f2dc5167b725.png`
-- Implementation: `http://127.0.0.1:5173/eventos` and `http://127.0.0.1:5173/evento/evento001`
-- Implementation screenshot: Codex in-app browser captures from this task; the browser surface did not expose a filesystem path.
-- Browser viewport observed: approximately 367 × 545 CSS pixels, device scale 1.
-- Source image: 1920 × 1080 pixels, desktop Figma presentation with browser chrome and black outer canvas.
-- Normalization: the source product canvas was evaluated independently from its browser chrome; the implementation was evaluated at its responsive mobile breakpoint because the in-app browser panel was narrow.
-- States inspected: event list, event edit form, subtask edit form, event-delete modal, subtask-delete modal, controlled network error with retry, and success notification.
+Fuente: exports UX US-06, US-07, US-08 y US-12 de la carpeta suministrada por el equipo. No se inspeccionó el Figma vivo; las fechas/cargas de prueba difieren de los ejemplos estáticos.
 
-## Full-view comparison evidence
+Evidencia local: C:/Users/Ideapad/Documents/Codex/2026-09-21/clo/qa-sprint3. Comparación lado a lado: comparacion-conflicto.png y comparacion-resolver-reducir.png. Referencia normalizada a ancho de modal450 px; no se alteraron resultados HTTP ni capturas para inventar estados.
 
-The implementation preserves the prototype's product language: dark navy navigation, pale blue-gray content canvas, white cards, indigo primary actions, red destructive actions, compact metadata and rounded surfaces. On the narrow browser viewport, the sidebar intentionally becomes a top navigation bar and cards/actions stack without horizontal overflow.
+## Superficies verificadas
 
-## Focused-region comparison evidence
+- Reprogramar: contexto de gestión/evento, fecha controlada y acciones Cancelar/Guardar.
+- Conflicto: modal blanco, radio12, encabezado y alerta roja, desglose de cinco cantidades, alternativas Mover/Reducir/Posponer. Primario #4F46E5, texto y borde acompañan el color.
+- Resolver: tarjetas Antes/Después, selección de alternativa en panel periwinkle, fecha y días sugeridos, campo compacto de horas, fórmula de capacidad del servidor. Se conservó la composición del export; no se introdujo una pantalla alternativa.
+- Configuración: consulta al abrir, campo personal, ayuda/preview, error y reintento con valor conservado, éxito tras confirmación. A375 px modal351.2 px, documento375 px: sin desbordamiento.
+- Estados: carga y acciones bloqueadas, éxito actualizado sin F5, error503 conservando la propuesta, vacío real con Crear evento y vacío por filtros.
 
-The event summary, management rows and destructive confirmation dialogs were inspected at readable scale. The dialogs retain clear hierarchy, explicit consequences, Cancel and Delete actions, disabled/loading behavior, an error region and retry behavior. Edit forms preserve entered values after a failed request and expose the backend status choices.
+## Revisión e iteración
 
-## Required fidelity surfaces
+Se sustituyó la edición inline por el modal compartido Detalle/Hoy; se corrigieron desbordamientos, paleta, panel seleccionado unido al campo, barra con segmentos gris/púrpura y divisores del desglose. La prueba de Escape devolvió el foco a Reprogramar. Inputs y alternativas quedan bloqueados al guardar; roles dialog/alertdialog y foco visible.
 
-- Fonts and typography: system sans-serif hierarchy matches the compact prototype; headings, labels, metadata and action copy remain readable without clipping.
-- Spacing and layout rhythm: navigation, page gutters, card padding, row spacing, radii and modal proportions remain consistent across desktop-derived and narrow responsive layouts.
-- Colors and visual tokens: navy navigation, pale canvas, white surfaces, indigo primary state, green success and red destructive/error states match the source language.
-- Image quality and asset fidelity: the target contains no required raster product assets. Interface icons use the existing icon library and stay sharp at both breakpoints.
-- Copy and content: Eventos, Crear evento, Editar evento, Eliminar, Gestiones and the confirmation/error/success messages support the requested workflow.
+Las diferencias respecto al ejemplo estático son los datos reales de QA, el texto de reintento y las cantidades/sugerencias del servidor. No se certifica coincidencia pixel a pixel con un archivo Figma inaccesible, ni despliegue externo. El informe IxD conserva capturas y alcance de la revisión.
 
-## Primary interactions verified
-
-- The global navigation appears on the event list and detail routes.
-- The list loads persisted events from the backend and exposes view, edit and delete actions.
-- Event deletion opens a custom confirmation dialog; Cancel closes it without altering the list.
-- Subtask deletion opens the same confirmation pattern; Cancel preserves the subtask.
-- Event and subtask edit forms retain their values on a simulated connection failure.
-- The failed subtask update changes its action to Reintentar.
-- Retrying after restoring the backend succeeds and updates the UI immediately with a success message.
-- Backend persistence was independently verified through POST/GET/PATCH/DELETE against Supabase and the temporary QA records were removed.
-
-## Findings
-
-No actionable P0, P1 or P2 visual or interaction differences remain for this story.
-
-## Comparison history
-
-- Earlier implementation used a browser-native confirmation dialog for subtasks and had no event list or event-delete flow.
-- Fix: added a reusable branded confirmation dialog, a persisted event list, event deletion, operation-specific error/retry states and a shared responsive navigation shell.
-- Earlier task rows displayed a static “Próxima” pill even after status changes.
-- Fix: the pill now displays and colors the persisted Pendiente, Ejecutada or Pospuesta status.
-- Post-fix evidence: modal cancellation, error retention, retry, successful save and responsive row rendering were all observed in the in-app browser.
-
-## Follow-up polish
-
-- P3: a future desktop-width capture could be added to the evidence set when the in-app browser exposes a wider viewport; the responsive implementation itself is already functional.
-
-final result: passed
+Verificación técnica final: 20 tests FE aprobados, lint sin errores y build correcto; backend34 tests. Evidencia de API real local y persistencia GET complementa la verificación visual.

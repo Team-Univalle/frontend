@@ -3,13 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { getHoyData } from '../services/hoyService';
 import { PLANNING_UPDATED } from '../services/planningEvents';
 import { getCurrentCapacity } from '../services/conflictsService';
+import ReprogramarModal from '../components/ReprogramarModal';
+import { Link } from 'react-router-dom';
 import './Hoy.css';
 
-const FILTROS_KEY = 'hoy:filtros';
+function filtrosKey() {
+  try { return `hoy:filtros:${JSON.parse(localStorage.getItem('user'))?.id ?? 'anon'}`; }
+  catch { return 'hoy:filtros:anon'; }
+}
 
 function leerFiltros() {
   try {
-    return JSON.parse(sessionStorage.getItem(FILTROS_KEY)) ?? {};
+    return JSON.parse(sessionStorage.getItem(filtrosKey())) ?? {};
   } catch {
     return {};
   }
@@ -22,6 +27,8 @@ export default function Hoy() {
   const [error, setError] = useState(null);
   const [capacity, setCapacity] = useState(null);
   const [capacityError, setCapacityError] = useState('');
+  const [reprogramItem, setReprogramItem] = useState(null);
+  const [notice, setNotice] = useState('');
 
   // Estados para los filtros
   const [filtroCategoria, setFiltroCategoria] = useState(() => leerFiltros().categoria ?? 'todos');
@@ -64,7 +71,7 @@ export default function Hoy() {
   useEffect(() => {
     try {
       sessionStorage.setItem(
-        FILTROS_KEY,
+        filtrosKey(),
         JSON.stringify({ categoria: filtroCategoria, estado: filtroEstado, evento: filtroEvento })
       );
     } catch {
@@ -275,8 +282,9 @@ export default function Hoy() {
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           </div>
-          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>¡Sin resultados con estos filtros!</h3>
-          <p style={{ color: '#64748b' }}>No hay tareas que coincidan con los filtros seleccionados.</p>
+          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>{hayFiltrosActivos ? '¡Sin resultados con estos filtros!' : 'No hay tareas programadas.'}</h3>
+          <p style={{ color: '#64748b' }}>{hayFiltrosActivos ? 'No hay tareas que coincidan con los filtros seleccionados.' : 'Hoy no tienes gestiones logísticas pendientes. ¿Quieres crear un evento?'}</p>
+          {!hayFiltrosActivos && <Link className="boton-crear-evento" to="/crear">Crear evento</Link>}
         </div>
       ) : (
         <>
@@ -298,7 +306,7 @@ export default function Hoy() {
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
                       <span className="badge-alerta-tiempo">{t.target_date}</span>
                     </div>
-                    <button className="tarea-accion-btn">{t.status}</button>
+                    <span>{t.status}</span><Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -325,7 +333,7 @@ export default function Hoy() {
                         {t.status}
                       </span>
                     </div>
-                    <button className="tarea-accion-btn">Completar</button>
+                    <Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -350,7 +358,7 @@ export default function Hoy() {
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
                       <span className="badge-etiqueta">{t.target_date}</span>
                     </div>
-                    <button className="tarea-accion-btn">{t.status}</button>
+                    <span>{t.status}</span><Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -358,6 +366,8 @@ export default function Hoy() {
           )}
         </>
       )}
+      {notice && <p role="status">{notice}</p>}
+      {reprogramItem && <ReprogramarModal key={reprogramItem.id} item={reprogramItem} onClose={() => setReprogramItem(null)} onSaved={() => { setReprogramItem(null); setNotice('Gestión reprogramada correctamente. Cambios guardados.'); }} />}
     </main>
   );
 }
