@@ -4,7 +4,7 @@ import { validarLimite } from '../utils/limite.js';
 // Contrato de DailyLimitView: GET/PUT /daily-limit.
 const ENDPOINT = '/daily-limit';
 const CAMPO = 'daily_limit_hours';
-const METODO_GUARDAR = 'PUT';
+const METODO_GUARDAR = 'PATCH';
 
 function leerLimite(data) {
   if (!data || !Object.hasOwn(data, CAMPO)) throw new Error('El servidor no informó el límite diario.');

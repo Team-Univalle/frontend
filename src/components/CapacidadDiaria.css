@@ -1,100 +1,145 @@
+/* ==========================================================================
+   CapacidadDiaria.css - Estilos armónicos para la barra lateral
+   ========================================================================== */
+
 .capacidad-diaria {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 16px 0 8px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  background: #f8fafc;
-  color: #334155;
-  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  background: #1e2842;
+  border: 1px solid #2d3a5e;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 20px 0 12px;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
 }
 
 .capacidad-diaria.is-updated {
-  border-color: #a5b4fc;
-  box-shadow: 0 0 0 4px #e0e7ff;
+  border-color: #5547ed;
+  box-shadow: 0 0 0 2px rgba(85, 71, 237, 0.3);
+}
+
+.capacidad-diaria.is-over {
+  border-color: #f87171;
+  background: #2b1d28;
+}
+
+.capacidad-diaria__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
 
 .capacidad-diaria__titulo {
-  margin: 0;
-  color: #475569;
-  font-size: 0.8rem;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8e99af;
+  margin: 0;
+}
+
+/* Botón visible y directo de edición */
+.capacidad-diaria__btn-editar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #283454;
+  border: 1px solid #3d4c75;
+  color: #c7cede;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.capacidad-diaria__btn-editar:hover {
+  background: #5547ed;
+  border-color: #5547ed;
+  color: #ffffff;
+}
+
+/* Métricas numéricas */
+.capacidad-diaria__metricas {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .capacidad-diaria__horas {
-  margin: 0;
-  color: #0f172a;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  color: #ffffff;
 }
 
 .capacidad-diaria__horas strong {
-  font-size: 1.5rem;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
 }
 
+.capacidad-diaria__horas small {
+  font-size: 11px;
+  color: #aeb7ca;
+}
+
+.capacidad-diaria__limite-tag {
+  font-size: 10px;
+  font-weight: 600;
+  background: #283454;
+  color: #b8c1d4;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+/* Barra de carga */
 .capacidad-diaria__barra {
-  height: 10px;
-  overflow: hidden;
+  width: 100%;
+  height: 6px;
+  background-color: #121826;
   border-radius: 999px;
-  background: #e5e7eb;
+  overflow: hidden;
 }
 
 .capacidad-diaria__barra span {
   display: block;
   height: 100%;
+  background-color: #5547ed;
   border-radius: 999px;
-  background: #5046e5;
   transition: width 0.3s ease;
 }
 
-.capacidad-diaria__barra.is-over span {
-  background: #c2413b;
+.capacidad-diaria.is-over .capacidad-diaria__barra span {
+  background-color: #f87171;
 }
 
-.capacidad-diaria__limite {
-  margin: 0;
-  font-size: 0.92rem;
-}
-
-.capacidad-diaria__limite.is-strong {
-  color: #0f172a;
-  font-weight: 700;
-}
-
+/* Mensajes de estado */
 .capacidad-diaria__nota {
-  margin: 0;
-  color: #475569;
-  font-size: 0.9rem;
+  margin: 6px 0 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: #34d399;
 }
 
 .capacidad-diaria__nota--alerta {
-  color: #991b1b;
-  font-weight: 600;
+  color: #f87171;
 }
 
-.capacidad-diaria__boton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 42px;
-  margin-top: 4px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #0f172a;
-  font: inherit;
-  font-weight: 600;
+.capacidad-diaria__error {
+  margin: 6px 0 0 0;
+  font-size: 11px;
+  color: #f87171;
+}
+
+.capacidad-diaria__error button {
+  background: transparent;
+  border: none;
+  color: #818cf8;
+  text-decoration: underline;
   cursor: pointer;
-}
-
-.capacidad-diaria__boton:hover {
-  background: #f1f5f9;
-}
-
-.capacidad-diaria__boton:focus-visible {
-  outline: 3px solid #c7d2fe;
-  outline-offset: 2px;
+  padding: 0;
+  font-size: 11px;
 }

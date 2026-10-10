@@ -5,8 +5,8 @@ import {
   ChartNoAxesColumnIncreasing,
   Home,
   ListChecks,
-  Pencil,
   Plus,
+  Pencil,
   LogOut,
 } from 'lucide-react';
 import LimiteDiarioModal from './LimiteDiarioModal';
@@ -49,7 +49,6 @@ export default function AppLayout() {
       });
   }, []);
 
-  // Límite guardado + horas programadas hoy (las páginas pueden volver a pedirlo con refrescarCapacidad)
   const cargarCapacidad = useCallback(async () => {
     const request = ++capacityRequest.current;
     const token = localStorage.getItem('token');
@@ -65,15 +64,22 @@ export default function AppLayout() {
     if (hoyResult.status === 'fulfilled') {
       setProgramadasHoy(hoyResult.value.planned_hours);
     }
-    if (limiteResult.status === 'rejected' || hoyResult.status === 'rejected') setCapacityError('No pudimos consultar tu capacidad diaria.');
+    if (limiteResult.status === 'rejected' || hoyResult.status === 'rejected') {
+      setCapacityError('No pudimos consultar tu capacidad diaria.');
+    }
   }, []);
 
   const invalidateCapacity = useCallback(() => { capacityRequest.current++; }, []);
+
   useEffect(() => {
     let active = true;
     queueMicrotask(() => { if (active) cargarCapacidad(); });
     window.addEventListener(PLANNING_UPDATED, cargarCapacidad);
-    return () => { active = false; invalidateCapacity(); window.removeEventListener(PLANNING_UPDATED, cargarCapacidad); };
+    return () => {
+      active = false;
+      invalidateCapacity();
+      window.removeEventListener(PLANNING_UPDATED, cargarCapacidad);
+    };
   }, [cargarCapacidad, invalidateCapacity, location.pathname]);
 
   useEffect(() => {
@@ -101,7 +107,6 @@ export default function AppLayout() {
     navigate('/login', { replace: true });
   };
 
-  // Obtener nombre e iniciales de forma segura según los campos de tu ProfileSerializer
   const rawNombre = user?.name || user?.first_name || user?.email || 'Usuario';
   const nombreUsuario = rawNombre.includes('@') ? rawNombre.split('@')[0] : rawNombre;
   const inicialUsuario = user?.iniciales || nombreUsuario.charAt(0).toUpperCase();
@@ -120,70 +125,95 @@ export default function AppLayout() {
           <span><strong>Organiza</strong><small>Eventos</small></span>
         </NavLink>
 
-        {/* Perfil del usuario en la barra lateral */}
-        <div className="app-user-profile" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', margin: '8px 0', background: 'rgba(0,0,0,0.03)', borderRadius: '8px' }}>
-          <div className="hoy-user-avatar" style={{ width: '32px', height: '32px', minWidth: '32px', borderRadius: '50%', background: '#4f46e5', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '0.85rem' }}>
-            {inicialUsuario}
-          </div>
-          <span style={{ fontSize: '0.9rem', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {nombreUsuario}
-          </span>
-        </div>
-
         <nav className="app-nav">
           {links.map(({ to, label, icon: Icon }) => (
-            <NavLink key={to} to={to} className={({ isActive }) => (
-              isActive || (to === '/eventos' && location.pathname.startsWith('/evento/'))
-                ? 'is-active'
-                : undefined
-            )}>
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) => (
+                isActive || (to === '/eventos' && location.pathname.startsWith('/evento/'))
+                  ? 'is-active'
+                  : undefined
+              )}
+            >
               <Icon size={17} aria-hidden="true" /> <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
+        {/* Sección de Capacidad Diaria integrada con el fondo oscuro */}
         <section
-          className={`capacidad-diaria${recienActualizado ? ' is-updated' : ''}`}
+          className={`capacidad-diaria${recienActualizado ? ' is-updated' : ''}${sobrepasa ? ' is-over' : ''}`}
           aria-label="Capacidad diaria"
         >
-          <h2 className="capacidad-diaria__titulo">Capacidad diaria</h2>
-          <p className="capacidad-diaria__horas">
-            <strong>{hayDato ? `${formatHoras(programadasHoy)} h` : '—'}</strong> programadas hoy
-          </p>
+          <div className="capacidad-diaria__header">
+            <h2 className="capacidad-diaria__titulo">Capacidad diaria</h2>
+            <button
+              type="button"
+              className="capacidad-diaria__btn-editar"
+              onClick={() => setModalAbierto(true)}
+              title="Configurar tu límite de horas diarias"
+            >
+              <Pencil size={12} aria-hidden="true" />
+              <span>Cambiar</span>
+            </button>
+          </div>
+
+          <div className="capacidad-diaria__metricas">
+            <div className="capacidad-diaria__horas">
+              <strong>{hayDato ? `${formatHoras(programadasHoy)}` : '—'}h</strong>
+              <small>hoy</small>
+            </div>
+            <span className="capacidad-diaria__limite-tag">
+              Límite {limite === null ? '...' : `${formatHoras(limite)}h`}
+            </span>
+          </div>
+
           <div
-            className={`capacidad-diaria__barra${sobrepasa ? ' is-over' : ''}`}
+            className="capacidad-diaria__barra"
             role="progressbar"
             aria-label="Horas programadas hoy"
             aria-valuemin={0}
-            aria-valuemax={limite}
+            aria-valuemax={limite || 6}
             aria-valuenow={hayDato ? Math.min(programadasHoy, limite) : 0}
           >
             <span style={{ width: `${porcentaje}%` }} />
           </div>
-          <p className={`capacidad-diaria__limite${recienActualizado ? ' is-strong' : ''}`}>
-            Tu límite: {limite === null ? 'consultando...' : `${textoHoras(limite)} por día`}
-          </p>
-          {capacityError && <p role="alert">{capacityError} <button type="button" onClick={cargarCapacidad}>Reintentar</button></p>}
-          {justo && <p className="capacidad-diaria__nota">Hoy llegas justo a tu límite.</p>}
-          {sobrepasa && (
-            <p className="capacidad-diaria__nota capacidad-diaria__nota--alerta">
-              Hoy superas tu límite por {formatHoras(exceso)} h.
+
+          {capacityError && (
+            <p role="alert" className="capacidad-diaria__error">
+              {capacityError}{' '}
+              <button type="button" onClick={cargarCapacidad}>Reintentar</button>
             </p>
           )}
-          <button
-            type="button"
-            className="capacidad-diaria__boton"
-            onClick={() => setModalAbierto(true)}
-          >
-            <Pencil size={15} aria-hidden="true" /> Cambiar límite
-          </button>
+
+          {justo && <p className="capacidad-diaria__nota">Llegas justo al límite.</p>}
+          {sobrepasa && (
+            <p className="capacidad-diaria__nota capacidad-diaria__nota--alerta">
+              Superas por {formatHoras(exceso)} h
+            </p>
+          )}
         </section>
 
-        {/* Botón de Cierre de Sesión al final */}
-        <div style={{ marginTop: 'auto', padding: '10px 0' }}>
-          <button type="button" onClick={handleLogout} className="app-logout-btn">
-            <LogOut size={17} aria-hidden="true" />
-            <span>Cerrar sesión</span>
+        {/* Footer unificado: Usuario e Ícono de Logout al lado */}
+        <div className="app-sidebar-footer">
+          <div className="app-user-profile" title={nombreUsuario}>
+            <div className="app-user-avatar">
+              {inicialUsuario}
+            </div>
+            <span className="app-user-name">
+              {nombreUsuario}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="app-logout-icon-btn"
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+          >
+            <LogOut size={16} aria-hidden="true" />
           </button>
         </div>
       </aside>
