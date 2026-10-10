@@ -21,7 +21,6 @@ import {
   updateSubtask,
 } from '../services/subtasksService';
 import { checkConflict } from '../services/conflictsService';
-import ReprogramarModal from '../components/ReprogramarModal';
 import { notifyPlanningUpdated } from '../services/planningEvents';
 import { validateEvent } from '../utils/validateEvent';
 import { validateSubtask, validateFechaObjetivo } from '../utils/validateSubtask';
@@ -63,7 +62,6 @@ function recuperarBorrador(key, base) {
 function ordenarSubtasks(lista) {
   return [...lista].sort((a, b) => a.fechaObjetivo.localeCompare(b.fechaObjetivo));
 }
-
 
 function formatEventDate(value) {
   if (!value) return 'Fecha sin definir';
@@ -249,6 +247,7 @@ export default function EventoDetalle() {
       setDraftErrors((current) => ({ ...current, [field]: undefined }));
     }
   }
+
   async function handleSaveSubtask(eventObject) {
     eventObject.preventDefault();
     if (saveEnCurso.current) return;
@@ -263,7 +262,6 @@ export default function EventoDetalle() {
     setSubmitError('');
     setConflict(null);
     try {
-      // Reprogramar (cambiar fecha u horas): el servidor decide si hay exceso de capacidad
       const original = editingSubtaskId ? subtasks.find((item) => item.id === editingSubtaskId) : null;
       const reprograma = Boolean(original) && (
         draft.fechaObjetivo !== original.fechaObjetivo ||
@@ -275,9 +273,6 @@ export default function EventoDetalle() {
         try {
           evaluacion = await checkConflict({
             date: draft.fechaObjetivo,
-            subtaskId: editingSubtaskId,
-            hours: draft.horasEstimadas,
-            status: draft.estado,
           });
         } catch (error) {
           setSubmitError(`No se pudo verificar la capacidad del día. ${error?.message || 'Intenta nuevamente.'}`);
@@ -494,12 +489,12 @@ export default function EventoDetalle() {
   }
 
   if (eventLoading && !eventData) {
-    return <main className="detalle-carga" role="status">Cargando evento...</main>;
+    return <main className="page-container" role="status">Cargando evento...</main>;
   }
 
   if (!eventData) {
     return (
-      <main className="detalle-carga detalle-carga--error" role="alert">
+      <main className="page-container" role="alert">
         <p>{eventLoadError || 'No fue posible cargar el evento.'}</p>
         <button type="button" onClick={loadEvent}>Reintentar</button>
       </main>
@@ -507,120 +502,119 @@ export default function EventoDetalle() {
   }
 
   return (
-    <main className="detalle-principal">
-      <div className="detalle-contenido">
-        <header className="detalle-topbar">
+    <main className="page-container">
+      {/* Cabecera Estándar Alineada */}
+      <header className="page-header">
+        <div>
+          <h1 className="page-header__title" id="evento-titulo">{eventData.titulo}</h1>
+          <p className="page-header__subtitle">
+            {formatEventDate(eventData.fecha)} · {eventData.lugar || 'Lugar sin definir'}
+          </p>
+        </div>
+      </header>
+
+      {notice && (
+        <div className={`detalle-aviso${notice.startsWith('⚠') ? ' detalle-aviso--error' : ''}`} role="status">
+          <span>{notice}</span>
+          <button type="button" onClick={() => setNotice('')} aria-label="Cerrar mensaje">×</button>
+        </div>
+      )}
+      {eventLoadError && <div className="detalle-aviso detalle-aviso--error" role="alert">{eventLoadError}</div>}
+
+      <section className="detalle-resumen" aria-labelledby="evento-titulo">
+        <div className="detalle-resumen__encabezado">
           <div>
-            <h1 id="evento-titulo">{eventData.titulo}</h1>
-            <p>{formatEventDate(eventData.fecha)} · {eventData.lugar || 'Lugar sin definir'}</p>
+            <span className="detalle-tipo">{displayType(eventData.tipo)}</span>
+            <p>Preparación del evento</p>
+            <div className="detalle-progreso__valor">
+              <strong>{progress}%</strong>
+              <span>{completedSubtasks} de {subtasks.length} gestiones ejecutadas</span>
+            </div>
           </div>
-        </header>
-
-        {notice && (
-          <div className={`detalle-aviso${notice.startsWith('⚠') ? ' detalle-aviso--error' : ''}`} role="status">
-            <span>{notice}</span>
-            <button type="button" onClick={() => setNotice('')} aria-label="Cerrar mensaje">×</button>
+          <div className="detalle-resumen__acciones">
+            <button className="detalle-editar" type="button" onClick={openEventEdit} disabled={isEventEditOpen || eventLoading}>
+              <Pencil size={15} aria-hidden="true" /> Editar evento
+            </button>
+            <button className="detalle-eliminar" type="button" onClick={requestDeleteEvent}>
+              <Trash2 size={15} aria-hidden="true" /> Eliminar evento
+            </button>
           </div>
-        )}
-        {eventLoadError && <div className="detalle-aviso detalle-aviso--error" role="alert">{eventLoadError}</div>}
+        </div>
+        <progress className="detalle-progreso" value={progress} max="100" aria-label={`Progreso del evento: ${progress}%`} />
+      </section>
 
-        <section className="detalle-resumen" aria-labelledby="evento-titulo">
-          <div className="detalle-resumen__encabezado">
-            <div>
-              <span className="detalle-tipo">{displayType(eventData.tipo)}</span>
-              <p>Preparación del evento</p>
-              <div className="detalle-progreso__valor">
-                <strong>{progress}%</strong>
-                <span>{completedSubtasks} de {subtasks.length} gestiones ejecutadas</span>
+      {isEventEditOpen && (
+        <form className="evento-edicion" onSubmit={handleUpdateEvent} noValidate>
+          <h2>Editar evento</h2>
+          <div className="evento-edicion__grid">
+            {[
+              ['titulo', 'Nombre del evento', 'text'],
+              ['tipo', 'Tipo de evento', 'text'],
+              ['contacto', 'Cliente o contacto', 'text'],
+              ['lugar', 'Lugar', 'text'],
+              ['fecha', 'Fecha del evento', 'date'],
+              ['hora', 'Hora del evento', 'time'],
+            ].map(([name, label, type]) => (
+              <div className="evento-edicion__campo" key={name}>
+                <label htmlFor={`editar-${name}`}>{label}</label>
+                <input id={`editar-${name}`} name={name} type={type} value={eventDraft?.[name] ?? ''} onChange={handleEventDraftChange} aria-invalid={!!eventErrors[name]} disabled={eventSaving} />
+                {eventErrors[name] && <span className="field-error">{eventErrors[name]}</span>}
               </div>
-            </div>
-            <div className="detalle-resumen__acciones">
-              <button className="detalle-editar" type="button" onClick={openEventEdit} disabled={isEventEditOpen || eventLoading}>
-                <Pencil size={15} aria-hidden="true" /> Editar evento
-              </button>
-              <button className="detalle-eliminar" type="button" onClick={requestDeleteEvent}>
-                <Trash2 size={15} aria-hidden="true" /> Eliminar evento
-              </button>
-            </div>
+            ))}
           </div>
-          <progress className="detalle-progreso" value={progress} max="100" aria-label={`Progreso del evento: ${progress}%`} />
-        </section>
+          {eventSubmitError && <div className="subtarea-submit-error" role="alert">{eventSubmitError}</div>}
+          <div className="evento-edicion__acciones">
+            <button type="button" onClick={() => setIsEventEditOpen(false)} disabled={eventSaving}>Cancelar</button>
+            <button className="boton-guardado" type="submit" disabled={eventSaving}>
+              {eventSaving ? 'Guardando...' : eventSubmitError ? 'Reintentar' : 'Guardar cambios'}
+            </button>
+          </div>
+        </form>
+      )}
 
-        {isEventEditOpen && (
-          <form className="evento-edicion" onSubmit={handleUpdateEvent} noValidate>
-            <h2>Editar evento</h2>
-            <div className="evento-edicion__grid">
-              {[
-                ['titulo', 'Nombre del evento', 'text'],
-                ['tipo', 'Tipo de evento', 'text'],
-                ['contacto', 'Cliente o contacto', 'text'],
-                ['lugar', 'Lugar', 'text'],
-                ['fecha', 'Fecha del evento', 'date'],
-                ['hora', 'Hora del evento', 'time'],
-              ].map(([name, label, type]) => (
-                <div className="evento-edicion__campo" key={name}>
-                  <label htmlFor={`editar-${name}`}>{label}</label>
-                  <input id={`editar-${name}`} name={name} type={type} value={eventDraft?.[name] ?? ''} onChange={handleEventDraftChange} aria-invalid={!!eventErrors[name]} disabled={eventSaving} />
-                  {eventErrors[name] && <span className="field-error">{eventErrors[name]}</span>}
-                </div>
-              ))}
-            </div>
-            {eventSubmitError && <div className="subtarea-submit-error" role="alert">{eventSubmitError}</div>}
-            <div className="evento-edicion__acciones">
-              <button type="button" onClick={() => setIsEventEditOpen(false)} disabled={eventSaving}>Cancelar</button>
-              <button className="boton-guardado" type="submit" disabled={eventSaving}>
-                {eventSaving ? 'Guardando...' : eventSubmitError ? 'Reintentar' : 'Guardar cambios'}
-              </button>
-            </div>
-          </form>
-        )}
-
-        <PlanLogistico
-          mode="detail"
-          items={subtasks}
-          loading={loading}
-          loadError={loadError}
-          onRetry={loadSubtasks}
-          onAdd={openCreateForm}
-          onEdit={openEditSubtask}
-          onDelete={requestDeleteSubtask}
-          deletingId={deletingId}
-          isFormOpen={isFormOpen}
-          isEditing={Boolean(editingSubtaskId)}
-          draft={draft}
-          draftErrors={draftErrors}
-          onDraftChange={handleDraftChange}
-          onCancel={closeSubtaskForm}
-          onSubmit={handleSaveSubtask}
-          saving={saving}
-          submitError={submitError}
-          editingId={editingSubtaskId}
-          maxDate={eventData.fecha}
-          conflict={conflict}
-          original={subtasks.find((item) => item.id === editingSubtaskId) ?? null}
-          onRestore={restoreOriginalSubtask}
-          draftRecovered={draftRecovered}
-          onReprogram={openReprogram}
-          reprogramId={null}
-          reprogramFecha={reprogramFecha}
-          reprogramError={reprogramError}
-          reprogramSubmitError={reprogramSubmitError}
-          reprogramSaving={reprogramSaving}
-          reprogramConflict={reprogramConflict}
-          onReduceHours={() => {
-            const item = subtasks.find((task) => task.id === reprogramId);
-            const fecha = reprogramFecha;
-            cancelReprogram();
-            openEditSubtask(item);
-            setDraft(subtareaADraft({ ...item, fechaObjetivo: fecha }));
-          }}
-          onReprogramChange={handleReprogramChange}
-          onReprogramCancel={cancelReprogram}
-          onReprogramSubmit={handleReprogramSubmit}
-        />
-      </div>
-
-      {reprogramId && <ReprogramarModal key={reprogramId} item={subtasks.find((item) => item.id === reprogramId)} eventName={eventData.titulo} maxDate={eventData.fecha} onClose={cancelReprogram} onSaved={() => { cancelReprogram(); setNotice('Gestión reprogramada correctamente. Cambios guardados.'); refrescarSubtasks(); }} />}
+      <PlanLogistico
+        mode="detail"
+        items={subtasks}
+        loading={loading}
+        loadError={loadError}
+        onRetry={loadSubtasks}
+        onAdd={openCreateForm}
+        onEdit={openEditSubtask}
+        onDelete={requestDeleteSubtask}
+        deletingId={deletingId}
+        isFormOpen={isFormOpen}
+        isEditing={Boolean(editingSubtaskId)}
+        draft={draft}
+        draftErrors={draftErrors}
+        onDraftChange={handleDraftChange}
+        onCancel={closeSubtaskForm}
+        onSubmit={handleSaveSubtask}
+        saving={saving}
+        submitError={submitError}
+        editingId={editingSubtaskId}
+        maxDate={eventData.fecha}
+        conflict={conflict}
+        original={subtasks.find((item) => item.id === editingSubtaskId) ?? null}
+        onRestore={restoreOriginalSubtask}
+        draftRecovered={draftRecovered}
+        onReprogram={openReprogram}
+        reprogramId={reprogramId}
+        reprogramFecha={reprogramFecha}
+        reprogramError={reprogramError}
+        reprogramSubmitError={reprogramSubmitError}
+        reprogramSaving={reprogramSaving}
+        reprogramConflict={reprogramConflict}
+        onReduceHours={() => {
+          const item = subtasks.find((task) => task.id === reprogramId);
+          const fecha = reprogramFecha;
+          cancelReprogram();
+          openEditSubtask(item);
+          setDraft(subtareaADraft({ ...item, fechaObjetivo: fecha }));
+        }}
+        onReprogramChange={handleReprogramChange}
+        onReprogramCancel={cancelReprogram}
+        onReprogramSubmit={handleReprogramSubmit}
+      />
 
       <ConfirmDialog
         open={eventDeleteOpen}

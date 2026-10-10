@@ -53,8 +53,11 @@ export default function Hoy() {
     setCapacity(null);
     setCapacityError('');
     const date = new Date().toLocaleDateString('en-CA');
-    try { setCapacity(await getCurrentCapacity(date)); }
-    catch (err) { setCapacityError(err.message); }
+    try { 
+      setCapacity(await getCurrentCapacity(date)); 
+    } catch (err) { 
+      setCapacityError(err.message); 
+    }
   }, []);
 
   useEffect(() => {
@@ -76,10 +79,10 @@ export default function Hoy() {
     }
   }, [filtroCategoria, filtroEstado, filtroEvento]);
 
-  // C4: ESTADO DE CARGA
+  // ESTADO DE CARGA
   if (loading) {
     return (
-      <main className="hoy-principal">
+      <main className="page-container">
         <div className="estado-carga-container" style={{ textAlign: 'center', padding: '60px' }}>
           <div className="spinner" style={{ fontSize: '24px', marginBottom: '12px' }}>⏳</div>
           <p>Cargando tus prioridades del día...</p>
@@ -88,10 +91,10 @@ export default function Hoy() {
     );
   }
 
-  // C4: ESTADO DE ERROR
+  // ESTADO DE ERROR
   if (error) {
     return (
-      <main className="hoy-principal">
+      <main className="page-container">
         <div style={{
           textAlign: 'center',
           padding: '60px 20px',
@@ -134,19 +137,16 @@ export default function Hoy() {
   const paraHoyOriginales = data?.hoy || [];
   const proximasOriginales = data?.proximas || [];
 
-  // Extraer una lista única de eventos de todas las tareas para llenar el selector dinámicamente
   const todasLasTareas = [...vencidasOriginales, ...paraHoyOriginales, ...proximasOriginales];
   const eventosDisponibles = Array.from(new Set(todasLasTareas.map(t => t.event_name).filter(Boolean)));
   const eventoActivo = eventosDisponibles.includes(filtroEvento) ? filtroEvento : 'todos';
 
-  // Lógica de filtrado combinada (Categoría + Estado + Evento)
   const filtrarTarea = (t) => {
     const coincideEstado = filtroEstado === 'todos' || t.status?.toLowerCase() === filtroEstado.toLowerCase();
     const coincideEvento = eventoActivo === 'todos' || t.event_name === eventoActivo;
     return coincideEstado && coincideEvento;
   };
 
-  // Filtrar según la categoría y los demás criterios
   const vencidas = (filtroCategoria === 'todos' || filtroCategoria === 'vencidas')
     ? vencidasOriginales.filter(filtrarTarea)
     : [];
@@ -170,23 +170,23 @@ export default function Hoy() {
 
   const hayFiltrosActivos = filtroCategoria !== 'todos' || filtroEstado !== 'todos' || eventoActivo !== 'todos';
 
+  // Cálculo corregido del porcentaje
+  const porcentajeCapacidad = capacity && capacity.daily_limit > 0 
+    ? Math.min(100, (capacity.planned_hours / capacity.daily_limit) * 100) 
+    : 0;
+
   return (
-    <main className="hoy-principal">
-      {/* Cabecera */}
-      <div className="hoy-header-container">
-        <div className="hoy-titulo-area">
-          <h1>Hoy</h1>
-          <p>{data?.fechaTexto || new Date().toLocaleDateString()}</p>
+    <main className="page-container">
+      {/* Cabecera Estándar Alineada */}
+      <header className="page-header">
+        <div>
+          <h1 className="page-header__title">Hoy</h1>
+          <p className="page-header__subtitle">{data?.fechaTexto || new Date().toLocaleDateString()}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button
-            className="boton-crear-evento"
-            onClick={() => navigate('/crear')}
-          >
-            + Crear evento
-          </button>
-        </div>
-      </div>
+        <button className="boton-crear-evento" onClick={() => navigate('/crear')}>
+          + Crear evento
+        </button>
+      </header>
 
       {/* Tarjeta de Capacidad */}
       <section className="capacidad-card">
@@ -204,13 +204,18 @@ export default function Hoy() {
         <div className="barra-progreso-bg">
           <div
             className="barra-progreso-fill"
-            style={{ width: `${capacity ? Math.min(100, capacity.planned_hours / capacity.daily_limit * 100) : 0}%` }}
+            style={{ width: `${porcentajeCapacidad}%` }}
           ></div>
         </div>
-        {capacityError && <p role="alert">No pudimos cargar la capacidad. {capacityError} <button type="button" onClick={cargarCapacidad}>Reintentar</button></p>}
+        {capacityError && (
+          <p role="alert">
+            No pudimos cargar la capacidad. {capacityError}{' '}
+            <button type="button" onClick={cargarCapacidad}>Reintentar</button>
+          </p>
+        )}
       </section>
 
-      {/* Filtros Interactivos (Sin el botón "Todos los eventos") */}
+      {/* Filtros Interactivos */}
       <div className="filtros-container" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <div className="filtros-grupo" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           <button
@@ -268,7 +273,7 @@ export default function Hoy() {
         </div>
       </div>
 
-      {/* C4: ESTADO VACÍO */}
+      {/* ESTADO VACÍO */}
       {noHayTareas ? (
         <div className="estado-vacio" style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '12px', border: '1px dashed #cbd5e1', marginTop: '20px' }}>
           <div className="estado-vacio-icono" style={{ marginBottom: '12px', color: '#6366f1' }}>
