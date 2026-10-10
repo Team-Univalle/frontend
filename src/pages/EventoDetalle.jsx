@@ -3,9 +3,11 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Pencil,
   Trash2,
+  Plus
 } from 'lucide-react';
 import ConfirmDialog from '../components/ConfirmDialog';
 import PlanLogistico from '../components/PlanLogistico';
+import ReprogramarModal from '../components/ReprogramarModal';
 import {
   deleteEvent,
   getEvent,
@@ -17,13 +19,12 @@ import {
   deleteSubtask,
   getSubtasks,
   mapSubtaskFieldErrors,
-  rescheduleSubtask,
   updateSubtask,
 } from '../services/subtasksService';
 import { checkConflict } from '../services/conflictsService';
-import { notifyPlanningUpdated } from '../services/planningEvents';
+import { PLANNING_UPDATED, notifyPlanningUpdated } from '../services/planningEvents';
 import { validateEvent } from '../utils/validateEvent';
-import { validateSubtask, validateFechaObjetivo } from '../utils/validateSubtask';
+import { validateSubtask } from '../utils/validateSubtask';
 import './EventoDetalle.css';
 
 const EMPTY_SUBTASK = {
@@ -48,8 +49,10 @@ function borrarBorrador(key) {
 }
 function subtareaADraft(item) {
   return {
-    gestion: item.gestion, fechaObjetivo: item.fechaObjetivo,
-    horasEstimadas: String(item.horasEstimadas), estado: item.estado
+    gestion: item.gestion ?? item.name,
+    fechaObjetivo: item.fechaObjetivo ?? item.target_date,
+    horasEstimadas: String(item.horasEstimadas ?? item.estimated_hours),
+    estado: item.estado ?? item.status ?? 'Pendiente'
   };
 }
 function recuperarBorrador(key, base) {
@@ -60,7 +63,7 @@ function recuperarBorrador(key, base) {
 }
 
 function ordenarSubtasks(lista) {
-  return [...lista].sort((a, b) => a.fechaObjetivo.localeCompare(b.fechaObjetivo));
+  return [...lista].sort((a, b) => (a.fechaObjetivo || a.target_date || '').localeCompare(b.fechaObjetivo || b.target_date || ''));
 }
 
 function formatEventDate(value) {
@@ -110,17 +113,12 @@ export default function EventoDetalle() {
   const [submitError, setSubmitError] = useState('');
   const [conflict, setConflict] = useState(null);
   const [draftRecovered, setDraftRecovered] = useState(false);
-  const [reprogramId, setReprogramId] = useState(null);
-  const [reprogramFecha, setReprogramFecha] = useState('');
-  const [reprogramError, setReprogramError] = useState('');
-  const [reprogramSubmitError, setReprogramSubmitError] = useState('');
-  const [reprogramSaving, setReprogramSaving] = useState(false);
-  const [reprogramConflict, setReprogramConflict] = useState(null);
-  const reprogramEnCurso = useRef(false);
+  
+  const [reprogramItem, setReprogramItem] = useState(null);
   const saveEnCurso = useRef(false);
 
   const completedSubtasks = subtasks.filter(
-    (subtask) => String(subtask.estado).toLowerCase() === 'ejecutada'
+    (subtask) => String(subtask.estado || subtask.status).toLowerCase() === 'ejecutada'
   ).length;
   const progress = subtasks.length
     ? Math.round((completedSubtasks / subtasks.length) * 100)
@@ -263,9 +261,12 @@ export default function EventoDetalle() {
     setConflict(null);
     try {
       const original = editingSubtaskId ? subtasks.find((item) => item.id === editingSubtaskId) : null;
+      const originalFecha = original?.fechaObjetivo ?? original?.target_date;
+      const originalHoras = original?.horasEstimadas ?? original?.estimated_hours;
+
       const reprograma = Boolean(original) && (
-        draft.fechaObjetivo !== original.fechaObjetivo ||
-        Number(draft.horasEstimadas) !== Number(original.horasEstimadas)
+        draft.fechaObjetivo !== originalFecha ||
+        Number(draft.horasEstimadas) !== Number(originalHoras)
       );
 
       if (reprograma) {
@@ -273,6 +274,9 @@ export default function EventoDetalle() {
         try {
           evaluacion = await checkConflict({
             date: draft.fechaObjetivo,
+            subtaskId: editingSubtaskId,
+            hours: Number(draft.horasEstimadas),
+            originalDate: originalFecha
           });
         } catch (error) {
           setSubmitError(`No se pudo verificar la capacidad del día. ${error?.message || 'Intenta nuevamente.'}`);
@@ -297,7 +301,7 @@ export default function EventoDetalle() {
         const next = editingSubtaskId
           ? current.map((item) => (item.id === savedSubtask.id ? savedSubtask : item))
           : [...current, savedSubtask];
-        return next.sort((a, b) => a.fechaObjetivo.localeCompare(b.fechaObjetivo));
+        return ordenarSubtasks(next);
       });
       setNotice(editingSubtaskId ? 'Cambios guardados.' : 'Subtarea creada correctamente.');
       notifyPlanningUpdated();
@@ -318,89 +322,14 @@ export default function EventoDetalle() {
   }
 
   function openReprogram(item) {
-    setReprogramId(item.id);
-    setReprogramFecha(item.fechaObjetivo);
-    setReprogramError('');
-    setReprogramSubmitError('');
-    setReprogramConflict(null);
-  }
-
-  function cancelReprogram() {
-    if (reprogramEnCurso.current) return;
-    setReprogramId(null);
-    setReprogramFecha('');
-    setReprogramError('');
-    setReprogramSubmitError('');
-    setReprogramConflict(null);
-  }
-
-  function handleReprogramChange(value) {
-    setReprogramFecha(value);
-    setReprogramError('');
-    setReprogramSubmitError('');
-    setReprogramConflict(null);
-  }
-
-  async function handleReprogramSubmit(eventObject) {
-    eventObject.preventDefault();
-    if (reprogramEnCurso.current) return;
-    const original = subtasks.find((item) => item.id === reprogramId);
-    if (!original) return;
-
-    const errorFecha = validateFechaObjetivo(reprogramFecha, eventData?.fecha);
-    if (errorFecha) {
-      setReprogramError(errorFecha);
-      return;
-    }
-    if (reprogramFecha === original.fechaObjetivo) {
-      cancelReprogram();
-      return;
-    }
-
-    reprogramEnCurso.current = true;
-    setReprogramSaving(true);
-    setReprogramSubmitError('');
-    setReprogramConflict(null);
-    try {
-      const evaluacion = await checkConflict({ date: reprogramFecha });
-      if (evaluacion.conflict) {
-        setReprogramConflict(evaluacion);
-        return;
-      }
-      const saved = await rescheduleSubtask(reprogramId, reprogramFecha);
-      if (String(saved.fechaObjetivo).slice(0, 10) !== reprogramFecha) {
-        throw new Error('El servidor no confirmó la nueva fecha.');
-      }
-      const idReprogramado = reprogramId;
-      setSubtasks((current) =>
-        ordenarSubtasks(
-          current.map((item) =>
-            item.id === idReprogramado ? { ...item, fechaObjetivo: reprogramFecha } : item
-          )
-        )
-      );
-      borrarBorrador(borradorKey(id, idReprogramado));
-      setReprogramId(null);
-      setReprogramFecha('');
-      setNotice('Cambios guardados.');
-      notifyPlanningUpdated();
-      refrescarSubtasks();
-    } catch (error) {
-      if (error?.status === 409) {
-        setReprogramSubmitError(`El servidor rechazó la propuesta por sobrecarga. ${error.message} Cambia la fecha o reduce las horas.`);
-      } else {
-        if (error?.data?.fields) {
-          const campos = mapSubtaskFieldErrors(error.data.fields);
-          if (campos.fechaObjetivo) setReprogramError(campos.fechaObjetivo);
-        }
-        setReprogramSubmitError(
-          `No se pudo reprogramar la gestión. ${error?.message || 'Intenta nuevamente.'}`
-        );
-      }
-    } finally {
-      reprogramEnCurso.current = false;
-      setReprogramSaving(false);
-    }
+    setReprogramItem({
+      id: item.id,
+      name: item.gestion ?? item.name,
+      target_date: item.fechaObjetivo ?? item.target_date,
+      estimated_hours: item.horasEstimadas ?? item.estimated_hours,
+      status: item.estado ?? item.status ?? 'Pendiente',
+      event_name: eventData?.titulo ?? 'Evento'
+    });
   }
 
   function requestDeleteSubtask(item) {
@@ -418,6 +347,7 @@ export default function EventoDetalle() {
       if (editingSubtaskId === subtaskToDelete.id) closeSubtaskForm();
       setSubtaskToDelete(null);
       setNotice('Subtarea eliminada correctamente.');
+      notifyPlanningUpdated();
     } catch (error) {
       setSubtaskDeleteError(error?.message || 'No se pudo eliminar la subtarea.');
     } finally {
@@ -464,10 +394,10 @@ export default function EventoDetalle() {
       setEventErrors(errors);
       return;
     }
-    const conflicto = subtasks.find((item) => item.fechaObjetivo > eventDraft.fecha);
+    const conflicto = subtasks.find((item) => (item.fechaObjetivo || item.target_date) > eventDraft.fecha);
     if (conflicto) {
       setEventErrors({
-        fecha: `La subtarea “${conflicto.gestion}” tiene fecha posterior. Edítala antes de mover el evento.`,
+        fecha: `La subtarea “${conflicto.gestion || conflicto.name}” tiene fecha posterior. Edítala antes de mover el evento.`,
       });
       return;
     }
@@ -503,7 +433,6 @@ export default function EventoDetalle() {
 
   return (
     <main className="page-container">
-      {/* Cabecera Estándar Alineada */}
       <header className="page-header">
         <div>
           <h1 className="page-header__title" id="evento-titulo">{eventData.titulo}</h1>
@@ -598,23 +527,23 @@ export default function EventoDetalle() {
         onRestore={restoreOriginalSubtask}
         draftRecovered={draftRecovered}
         onReprogram={openReprogram}
-        reprogramId={reprogramId}
-        reprogramFecha={reprogramFecha}
-        reprogramError={reprogramError}
-        reprogramSubmitError={reprogramSubmitError}
-        reprogramSaving={reprogramSaving}
-        reprogramConflict={reprogramConflict}
-        onReduceHours={() => {
-          const item = subtasks.find((task) => task.id === reprogramId);
-          const fecha = reprogramFecha;
-          cancelReprogram();
-          openEditSubtask(item);
-          setDraft(subtareaADraft({ ...item, fechaObjetivo: fecha }));
-        }}
-        onReprogramChange={handleReprogramChange}
-        onReprogramCancel={cancelReprogram}
-        onReprogramSubmit={handleReprogramSubmit}
       />
+
+      {reprogramItem && (
+        <ReprogramarModal
+          key={reprogramItem.id}
+          item={reprogramItem}
+          eventName={eventData?.titulo}
+          maxDate={eventData?.fecha}
+          onClose={() => setReprogramItem(null)}
+          onSaved={() => {
+            setReprogramItem(null);
+            setNotice('Gestión reprogramada correctamente.');
+            notifyPlanningUpdated();
+            refrescarSubtasks();
+          }}
+        />
+      )}
 
       <ConfirmDialog
         open={eventDeleteOpen}
@@ -629,12 +558,40 @@ export default function EventoDetalle() {
       <ConfirmDialog
         open={Boolean(subtaskToDelete)}
         title="Eliminar subtarea"
-        message={`¿Seguro que deseas eliminar “${subtaskToDelete?.gestion ?? ''}”? Esta acción no se puede deshacer.`}
+        message={`¿Seguro que deseas eliminar “${subtaskToDelete?.gestion ?? subtaskToDelete?.name ?? ''}”? Esta acción no se puede deshacer.`}
         loading={Boolean(deletingId)}
         error={subtaskDeleteError}
         onConfirm={confirmDeleteSubtask}
         onCancel={() => !deletingId && setSubtaskToDelete(null)}
       />
+      
+       {/* Botón flotante inferior: Solo se muestra si HAY gestiones y el formulario no está abierto */}
+      {subtasks.length > 0 && !isFormOpen && (
+        <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={openCreateForm}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              borderRadius: '10px',
+              backgroundColor: '#4f46e5',
+              color: '#ffffff',
+              fontWeight: '600',
+              fontSize: '14px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+              transition: 'background-color 0.15s ease'
+            }}
+          >
+            <Plus size={16} aria-hidden="true" />
+            <span>Añadir gestión</span>
+          </button>
+        </div>
+      )}
     </main>
   );
 }
