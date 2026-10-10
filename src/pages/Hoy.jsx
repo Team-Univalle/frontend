@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getHoyData } from '../services/hoyService';
 import { PLANNING_UPDATED } from '../services/planningEvents';
 import { getCurrentCapacity } from '../services/conflictsService';
 import ReprogramarModal from '../components/ReprogramarModal';
-import { Link } from 'react-router-dom';
 import './Hoy.css';
 
 function filtrosKey() {
@@ -54,9 +53,18 @@ export default function Hoy() {
     setCapacityError('');
     const date = new Date().toLocaleDateString('en-CA');
     try { 
-      setCapacity(await getCurrentCapacity(date)); 
+      const res = await getCurrentCapacity(date);
+      
+      const planned = Number(res?.planned_hours ?? res?.plannedHours ?? 0);
+      const limit = Number(res?.daily_limit ?? res?.dailyLimit ?? 6);
+
+      setCapacity({
+        planned_hours: planned,
+        daily_limit: limit,
+      });
     } catch (err) { 
-      setCapacityError(err.message); 
+      console.error('Error al cargar capacidad:', err);
+      setCapacityError(err.message || 'Error de sincronización'); 
     }
   }, []);
 
@@ -69,6 +77,12 @@ export default function Hoy() {
   }, [cargarDatosHoy, cargarCapacidad]);
 
   useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(''), 4000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  useEffect(() => {
     try {
       sessionStorage.setItem(
         filtrosKey(),
@@ -79,7 +93,6 @@ export default function Hoy() {
     }
   }, [filtroCategoria, filtroEstado, filtroEvento]);
 
-  // ESTADO DE CARGA
   if (loading) {
     return (
       <main className="page-container">
@@ -91,7 +104,6 @@ export default function Hoy() {
     );
   }
 
-  // ESTADO DE ERROR
   if (error) {
     return (
       <main className="page-container">
@@ -170,18 +182,17 @@ export default function Hoy() {
 
   const hayFiltrosActivos = filtroCategoria !== 'todos' || filtroEstado !== 'todos' || eventoActivo !== 'todos';
 
-  // Cálculo corregido del porcentaje
   const porcentajeCapacidad = capacity && capacity.daily_limit > 0 
     ? Math.min(100, (capacity.planned_hours / capacity.daily_limit) * 100) 
     : 0;
 
   return (
     <main className="page-container">
-      {/* Cabecera Estándar Alineada */}
+      {/* Cabecera Estándar */}
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Hoy</h1>
-          <p className="page-header__subtitle">{data?.fechaTexto || new Date().toLocaleDateString()}</p>
+          <p className="page-header__subtitle">{data?.fechaTexto || new Date().toLocaleDateString('es-CO')}</p>
         </div>
         <button className="boton-crear-evento" onClick={() => navigate('/crear')}>
           + Crear evento
@@ -208,9 +219,9 @@ export default function Hoy() {
           ></div>
         </div>
         {capacityError && (
-          <p role="alert">
+          <p role="alert" style={{ marginTop: '12px', fontSize: '13px', color: '#b91c1c' }}>
             No pudimos cargar la capacidad. {capacityError}{' '}
-            <button type="button" onClick={cargarCapacidad}>Reintentar</button>
+            <button type="button" className="btn-reintentar-link" onClick={cargarCapacidad}>Reintentar</button>
           </p>
         )}
       </section>
@@ -273,7 +284,7 @@ export default function Hoy() {
         </div>
       </div>
 
-      {/* ESTADO VACÍO */}
+      {/* TAREAS */}
       {noHayTareas ? (
         <div className="estado-vacio" style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '12px', border: '1px dashed #cbd5e1', marginTop: '20px' }}>
           <div className="estado-vacio-icono" style={{ marginBottom: '12px', color: '#6366f1' }}>
@@ -305,8 +316,10 @@ export default function Hoy() {
                     <div className="tarea-meta">
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
                       <span className="badge-alerta-tiempo">{t.target_date}</span>
+                      <span className="badge-etiqueta danger">{t.status || 'Pendiente'}</span>
                     </div>
-                    <span>{t.status}</span><Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
+                    <Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link>
+                    <button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -329,11 +342,10 @@ export default function Hoy() {
                   <div className="tarea-derecha">
                     <div className="tarea-meta">
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
-                      <span className="badge-etiqueta warning">
-                        {t.status}
-                      </span>
+                      <span className="badge-etiqueta warning">{t.status || 'Pendiente'}</span>
                     </div>
-                    <Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
+                    <Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link>
+                    <button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -357,8 +369,10 @@ export default function Hoy() {
                     <div className="tarea-meta">
                       <span className="badge-tiempo">{t.estimated_hours}h est.</span>
                       <span className="badge-etiqueta">{t.target_date}</span>
+                      <span className="badge-etiqueta">{t.status || 'Pendiente'}</span>
                     </div>
-                    <span>{t.status}</span><Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link><button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
+                    <Link className="tarea-accion-btn tarea-detalle-link" to={`/evento/${t.event_id}`}>Ver detalle</Link>
+                    <button className="tarea-accion-btn" onClick={() => setReprogramItem(t)}>Reprogramar</button>
                   </div>
                 </div>
               ))}
@@ -366,8 +380,26 @@ export default function Hoy() {
           )}
         </>
       )}
-      {notice && <p role="status">{notice}</p>}
-      {reprogramItem && <ReprogramarModal key={reprogramItem.id} item={reprogramItem} onClose={() => setReprogramItem(null)} onSaved={() => { setReprogramItem(null); setNotice('Gestión reprogramada correctamente. Cambios guardados.'); }} />}
+
+      {notice && (
+        <div className="toast-notificacion" role="status">
+          <span>✓</span>
+          <span>{notice}</span>
+        </div>
+      )}
+      {reprogramItem && (
+        <ReprogramarModal
+          key={reprogramItem.id}
+          item={reprogramItem}
+          onClose={() => setReprogramItem(null)}
+          onSaved={() => {
+            setReprogramItem(null);
+            setNotice('Gestión reprogramada correctamente. Cambios guardados.');
+            cargarDatosHoy();
+            cargarCapacidad();
+          }}
+        />
+      )}
     </main>
   );
 }
