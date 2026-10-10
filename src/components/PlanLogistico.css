@@ -272,3 +272,40 @@
   color: #991b1b;
   font-size: 13px;
 }
+
+/* ==========================================================================
+   Corrección de desbordamiento en tarjetas de gestiones
+   ========================================================================== */
+
+/* Permite que la tarjeta adapte su contenido de forma fluida */
+.gestion-card--lectura {
+  width: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap; /* Permite envolver el contenido si falta espacio */
+}
+
+/* El grupo de acciones (Reprogramar, Editar, Eliminar) */
+.gestion-card__acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Adaptación responsive para resoluciones más bajas */
+@media (max-width: 992px) {
+  .gestion-card--lectura {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .gestion-card__acciones {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+}
