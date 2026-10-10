@@ -96,10 +96,56 @@ export default function Hoy() {
   if (loading) {
     return (
       <main className="page-container">
-        <div className="estado-carga-container" style={{ textAlign: 'center', padding: '60px' }}>
-          <div className="spinner" style={{ fontSize: '24px', marginBottom: '12px' }}>⏳</div>
-          <p>Cargando tus prioridades del día...</p>
+        <header className="page-header">
+          <div>
+            <h1 className="page-header__title">Hoy</h1>
+            <p className="page-header__subtitle">{new Date().toLocaleDateString('es-CO')}</p>
+          </div>
+        </header>
+
+        <div 
+          className="estado-carga-card" 
+          style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            padding: '48px 24px',
+            textAlign: 'center',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)',
+            maxWidth: '520px',
+            margin: '40px auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px'
+          }}
+        >
+          <div 
+            className="spinner-moderno" 
+            style={{
+              width: '36px',
+              height: '36px',
+              border: '3px solid #e0e7ff',
+              borderTopColor: '#6366f1',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }} 
+          />
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginBottom: '4px' }}>
+              Cargando tus prioridades del día
+            </h3>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+              Sincronizando la agenda y capacidad diaria...
+            </p>
+          </div>
         </div>
+
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </main>
     );
   }
@@ -107,35 +153,44 @@ export default function Hoy() {
   if (error) {
     return (
       <main className="page-container">
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          background: '#ffffff',
-          borderRadius: '12px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-          maxWidth: '600px',
-          margin: '40px auto'
-        }}>
+        <header className="page-header">
+          <div>
+            <h1 className="page-header__title">Hoy</h1>
+            <p className="page-header__subtitle">{new Date().toLocaleDateString('es-CO')}</p>
+          </div>
+        </header>
+
+        <div 
+          style={{
+            textAlign: 'center',
+            padding: '48px 24px',
+            background: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #fee2e2',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.05)',
+            maxWidth: '520px',
+            margin: '40px auto'
+          }}
+        >
           <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚠️</div>
-          <h3 style={{ color: '#1e293b', marginBottom: '8px', fontSize: '18px', fontWeight: '600' }}>
-            ¡Ocurrió un error inesperado!
+          <h3 style={{ color: '#991b1b', marginBottom: '8px', fontSize: '17px', fontWeight: '600' }}>
+            No pudimos conectar con el servidor
           </h3>
-          <p style={{ color: '#64748b', marginBottom: '24px', fontSize: '14px' }}>
+          <p style={{ color: '#64748b', marginBottom: '24px', fontSize: '14px', lineHeight: '1.5' }}>
             {error}
           </p>
           <button
             onClick={cargarDatosHoy}
             style={{
               background: '#6366f1',
-              color: '#fff',
+              color: '#ffffff',
               border: 'none',
               padding: '10px 24px',
               borderRadius: '8px',
               cursor: 'pointer',
               fontWeight: '500',
               fontSize: '14px',
-              transition: 'background 0.2s'
+              boxShadow: '0 2px 4px rgba(99, 102, 241, 0.2)'
             }}
           >
             Reintentar

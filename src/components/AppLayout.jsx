@@ -15,6 +15,7 @@ import { getCurrentUser, logoutUser } from '../services/authService';
 import { getCurrentCapacity } from '../services/conflictsService';
 import { PLANNING_UPDATED, notifyPlanningUpdated } from '../services/planningEvents';
 import { getDailyLimit } from '../services/limitService';
+import { getHoyData } from '../services/hoyService'; // <--- Importado para auditar subtareas globales
 import { LIMITE_POR_DEFECTO, formatHoras, textoHoras } from '../utils/limite';
 import './AppLayout.css';
 import './CapacidadDiaria.css';
@@ -35,6 +36,7 @@ export default function AppLayout() {
   const [capacityError, setCapacityError] = useState('');
   const capacityRequest = useRef(0);
   const [programadasHoy, setProgramadasHoy] = useState(null);
+  const [todasLasTareas, setTodasLasTareas] = useState([]); // <--- Guarda todas las tareas activas
   const [modalAbierto, setModalAbierto] = useState(false);
   const [toast, setToast] = useState(null);
   const [recienActualizado, setRecienActualizado] = useState(false);
@@ -56,24 +58,39 @@ export default function AppLayout() {
     setProgramadasHoy(null);
     setCapacityError('');
     const date = new Date().toLocaleDateString('en-CA');
-    const [limiteResult, hoyResult] = await Promise.allSettled([getDailyLimit(), getCurrentCapacity(date)]);
+
+    const [limiteResult, hoyResult, datosTareasResult] = await Promise.allSettled([
+      getDailyLimit(),
+      getCurrentCapacity(date),
+      getHoyData(),
+    ]);
+
     if (request !== capacityRequest.current || token !== localStorage.getItem('token')) return;
+
     if (limiteResult.status === 'fulfilled') {
       setLimite(limiteResult.value.limite ?? LIMITE_POR_DEFECTO);
     }
     if (hoyResult.status === 'fulfilled') {
       setProgramadasHoy(hoyResult.value.planned_hours);
     }
+    if (datosTareasResult.status === 'fulfilled' && datosTareasResult.value) {
+      const { vencidas = [], hoy = [], proximas = [] } = datosTareasResult.value;
+      setTodasLasTareas([...vencidas, ...hoy, ...proximas]);
+    }
     if (limiteResult.status === 'rejected' || hoyResult.status === 'rejected') {
       setCapacityError('No pudimos consultar tu capacidad diaria.');
     }
   }, []);
 
-  const invalidateCapacity = useCallback(() => { capacityRequest.current++; }, []);
+  const invalidateCapacity = useCallback(() => {
+    capacityRequest.current++;
+  }, []);
 
   useEffect(() => {
     let active = true;
-    queueMicrotask(() => { if (active) cargarCapacidad(); });
+    queueMicrotask(() => {
+      if (active) cargarCapacidad();
+    });
     window.addEventListener(PLANNING_UPDATED, cargarCapacidad);
     return () => {
       active = false;
@@ -121,8 +138,13 @@ export default function AppLayout() {
     <div className="app-shell">
       <aside className="app-sidebar" aria-label="Navegación principal">
         <NavLink className="app-logo" to="/eventos" aria-label="Organiza Eventos">
-          <span className="app-logo__icon"><CalendarCheck2 size={20} aria-hidden="true" /></span>
-          <span><strong>Organiza</strong><small>Eventos</small></span>
+          <span className="app-logo__icon">
+            <CalendarCheck2 size={20} aria-hidden="true" />
+          </span>
+          <span>
+            <strong>Organiza</strong>
+            <small>Eventos</small>
+          </span>
         </NavLink>
 
         <nav className="app-nav">
@@ -130,20 +152,22 @@ export default function AppLayout() {
             <NavLink
               key={to}
               to={to}
-              className={({ isActive }) => (
+              className={({ isActive }) =>
                 isActive || (to === '/eventos' && location.pathname.startsWith('/evento/'))
                   ? 'is-active'
                   : undefined
-              )}
+              }
             >
               <Icon size={17} aria-hidden="true" /> <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        {/* Sección de Capacidad Diaria integrada con el fondo oscuro */}
+        {/* Sección de Capacidad Diaria en la Sidebar */}
         <section
-          className={`capacidad-diaria${recienActualizado ? ' is-updated' : ''}${sobrepasa ? ' is-over' : ''}`}
+          className={`capacidad-diaria${recienActualizado ? ' is-updated' : ''}${
+            sobrepasa ? ' is-over' : ''
+          }`}
           aria-label="Capacidad diaria"
         >
           <div className="capacidad-diaria__header">
@@ -183,7 +207,9 @@ export default function AppLayout() {
           {capacityError && (
             <p role="alert" className="capacidad-diaria__error">
               {capacityError}{' '}
-              <button type="button" onClick={cargarCapacidad}>Reintentar</button>
+              <button type="button" onClick={cargarCapacidad}>
+                Reintentar
+              </button>
             </p>
           )}
 
@@ -195,15 +221,11 @@ export default function AppLayout() {
           )}
         </section>
 
-        {/* Footer unificado: Usuario e Ícono de Logout al lado */}
+        {/* Footer unificado: Usuario y Botón Logout */}
         <div className="app-sidebar-footer">
           <div className="app-user-profile" title={nombreUsuario}>
-            <div className="app-user-avatar">
-              {inicialUsuario}
-            </div>
-            <span className="app-user-name">
-              {nombreUsuario}
-            </span>
+            <div className="app-user-avatar">{inicialUsuario}</div>
+            <span className="app-user-name">{nombreUsuario}</span>
           </div>
 
           <button
@@ -231,6 +253,7 @@ export default function AppLayout() {
       <LimiteDiarioModal
         open={modalAbierto}
         programadasHoy={programadasHoy}
+        todasLasTareas={todasLasTareas}
         onClose={() => setModalAbierto(false)}
         onSaved={handleLimiteGuardado}
       />

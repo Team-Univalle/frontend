@@ -13,6 +13,12 @@ import {
 } from '../utils/limite';
 import './LimiteDiarioModal.css';
 
+function formatearFechaTexto(fechaStr) {
+  if (!fechaStr || fechaStr === 'sin-fecha') return 'una fecha';
+  const [a, m, d] = fechaStr.split('-');
+  return a && m && d ? `${d}/${m}/${a}` : fechaStr;
+}
+
 function vistaPrevia(limite, programadas) {
   const diferencia = programadas - limite;
   const horasHoy = formatHoras(programadas);
@@ -37,7 +43,13 @@ function vistaPrevia(limite, programadas) {
   };
 }
 
-export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSaved }) {
+export default function LimiteDiarioModal({
+  open,
+  programadasHoy,
+  todasLasTareas = [],
+  onClose,
+  onSaved,
+}) {
   const formId = useId();
   const inputId = useId();
   const mensajeId = useId();
@@ -68,7 +80,10 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
     }
   }, []);
 
-  const invalidateRequest = useCallback(() => { solicitud.current++; }, []);
+  const invalidateRequest = useCallback(() => {
+    solicitud.current++;
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     let active = true;
@@ -80,7 +95,10 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
       setSaving(false);
       cargar();
     });
-    return () => { active = false; invalidateRequest(); };
+    return () => {
+      active = false;
+      invalidateRequest();
+    };
   }, [open, cargar, invalidateRequest]);
 
   const error = validarLimite(valor);
@@ -97,15 +115,70 @@ export default function LimiteDiarioModal({ open, programadasHoy, onClose, onSav
     setTocado(true);
     if (error) return;
 
+    const limitePropuesto = aNumero(valor);
+
+    // 1. Validar si existe alguna subtarea individual que sola supere el nuevo límite
+    if (todasLasTareas && todasLasTareas.length > 0) {
+      const tareaExcedida = todasLasTareas.find(
+        (t) => Number(t.estimated_hours ?? t.horasEstimadas ?? 0) > limitePropuesto
+      );
+
+      if (tareaExcedida) {
+        const horasTarea = tareaExcedida.estimated_hours ?? tareaExcedida.horasEstimadas;
+        const nombreTarea = tareaExcedida.name || tareaExcedida.gestion || 'sin título';
+        setFieldError(
+          `No puedes establecer el límite en ${formatHoras(limitePropuesto)} h porque la gestión "${nombreTarea}" requiere ${formatHoras(Number(horasTarea))} h por sí sola.`
+        );
+        return;
+      }
+
+      // 2. Agrupar tareas por fecha con sus detalles
+      const tareasPorFecha = todasLasTareas.reduce((acc, t) => {
+        const fecha = t.target_date || t.fechaObjetivo || 'sin-fecha';
+        const horas = Number(t.estimated_hours ?? t.horasEstimadas ?? 0);
+
+        if (!acc[fecha]) {
+          acc[fecha] = { totalHoras: 0, tareas: [] };
+        }
+        acc[fecha].totalHoras += horas;
+        acc[fecha].tareas.push(t.name || t.gestion || 'Gestión');
+        return acc;
+      }, {});
+
+      // Buscar la primera fecha que supere el límite propuesto
+      const entryExcedida = Object.entries(tareasPorFecha).find(
+        ([_, data]) => data.totalHoras > limitePropuesto
+      );
+
+      if (entryExcedida) {
+        const [fecha, { totalHoras, tareas }] = entryExcedida;
+        const fechaTexto = formatearFechaTexto(fecha);
+        const listaNombres = tareas.map((t) => `"${t}"`).join(', ');
+
+        setFieldError(
+          `El día ${fechaTexto} suma ${formatHoras(totalHoras)} h entre ${tareas.length} gestiones (${listaNombres}). Reprograma alguna tarea antes de bajar el límite a ${formatHoras(limitePropuesto)} h.`
+        );
+        return;
+      }
+    }
+
+    // 3. Fallback adicional con programadasHoy
+    if (hayProgramadas && programadasHoy > limitePropuesto) {
+      setFieldError(
+        `Hoy tienes ${formatHoras(programadasHoy)} h programadas. No puedes reducir el límite a ${formatHoras(limitePropuesto)} h.`
+      );
+      return;
+    }
+
     enCurso.current = true;
     setSaving(true);
     setSaveError(false);
     setFieldError('');
     const token = localStorage.getItem('token');
     try {
-      const { limite } = await saveDailyLimit(aNumero(valor));
+      const { limite } = await saveDailyLimit(limitePropuesto);
       if (token !== localStorage.getItem('token')) return;
-      onSaved(limite);
+      onSaved?.(limite);
     } catch (err) {
       const message = err?.data?.fields?.daily_limit_hours;
       if (message) setFieldError(Array.isArray(message) ? message.join(' ') : message);
