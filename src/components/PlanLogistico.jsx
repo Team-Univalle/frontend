@@ -1,4 +1,4 @@
-import { CalendarClock, Pencil, Trash2 } from 'lucide-react';
+import { CalendarClock, Lock, Pencil, Trash2 } from 'lucide-react';
 import './PlanLogistico.css';
 import { Fragment } from 'react';
 import CapacityFeedback from './CapacityFeedback';
@@ -263,9 +263,19 @@ export default function PlanLogistico({
                     <button type="button" onClick={() => onEdit(item)} disabled={deletingId === item.id || reprogramId !== null}>
                       <Pencil size={15} aria-hidden="true" /> Editar
                     </button>
-                    <button className="gestion-card__eliminar" type="button" onClick={() => onDelete(item)} disabled={deletingId === item.id} aria-label={`Eliminar ${item.gestion}`}>
-                      <Trash2 size={16} aria-hidden="true" />
-                    </button>
+                    {String(item.estado).toLowerCase() === 'ejecutada' ? (
+                      <span
+                        className="gestion-card__historico"
+                        title="Las gestiones ejecutadas no se pueden eliminar porque forman parte del histórico."
+                      >
+                        <Lock size={15} aria-hidden="true" />
+                        <span className="sr-only">{item.gestion} está ejecutada: no se puede eliminar porque forma parte del histórico.</span>
+                      </span>
+                    ) : (
+                      <button className="gestion-card__eliminar" type="button" onClick={() => onDelete(item)} disabled={deletingId === item.id} aria-label={`Eliminar ${item.gestion}`}>
+                        <Trash2 size={16} aria-hidden="true" />
+                      </button>
+                    )}
                   </div>
                 </article>
                 {reprogramId === item.id && (

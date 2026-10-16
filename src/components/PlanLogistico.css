@@ -367,3 +367,26 @@
   .gestion-card--nueva .gestion-field--horas,
   .gestion-card--nueva > :not(.gestion-card__numero):not(.gestion-field) { grid-column: 2; }
 }
+
+/* Gestión ejecutada: en lugar de "Eliminar" se muestra un candado (es parte del histórico) */
+.gestion-card__historico {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 9px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  color: #667085;
+  background: #f9fafb;
+  cursor: help;
+}
+
+.gestion-card__historico .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

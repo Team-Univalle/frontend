@@ -469,3 +469,10 @@
     transform: translateY(0);
   }
 }
+/* El encabezado de Hoy usa el mismo ancho que las tarjetas (960px):
+   así "+ Crear evento" queda alineado con el borde derecho del contenido. */
+.page-header:has(~ .capacidad-card) {
+  width: 100%;
+  max-width: 960px;
+  box-sizing: border-box;
+}

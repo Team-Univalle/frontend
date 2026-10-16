@@ -334,6 +334,7 @@ export default function EventoDetalle() {
   }
 
   function requestDeleteSubtask(item) {
+    if (String(item.estado ?? item.status).toLowerCase() === 'ejecutada') return; // histórico: no se elimina
     setSubtaskToDelete(item);
     setSubtaskDeleteError('');
   }
