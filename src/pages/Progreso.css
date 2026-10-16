@@ -1,0 +1,200 @@
+/* Vista /progreso (HU-10). Mismo ancho y tarjetas que /hoy (max 960px). */
+.progreso-page .page-header,
+.progreso-resumen,
+.progreso-lista,
+.progreso-estado {
+  width: 100%;
+  max-width: 960px;
+  box-sizing: border-box;
+}
+
+.progreso-resumen,
+.progreso-card,
+.progreso-estado {
+  padding: 22px 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(31, 24, 55, 0.04);
+  box-sizing: border-box;
+}
+
+/* Resumen global */
+.progreso-resumen { margin-bottom: 32px; }
+
+.progreso-resumen h2 {
+  margin: 0 0 10px;
+  color: #475467;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.progreso-resumen__metricas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 64px;
+  margin-bottom: 18px;
+}
+
+.progreso-resumen__metricas p {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.progreso-resumen__metricas strong {
+  color: #0f172a;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.progreso-metrica--alerta strong,
+.progreso-card__metricas .progreso-metrica--alerta { color: #b54708; }
+
+.progreso-resumen__barra {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.progreso-resumen__barra .progress-bar { flex: 1; }
+
+.progreso-resumen__barra span {
+  color: #4f46e5;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Tarjetas por evento */
+.progreso-lista {
+  display: grid;
+  gap: 16px;
+}
+
+.progreso-card {
+  display: grid;
+  gap: 16px;
+}
+
+.progreso-card__cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.progreso-card__cabecera h3 {
+  margin: 0 0 4px;
+  color: #0f172a;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.progreso-card__cabecera p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.progreso-card__valor {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  text-align: right;
+}
+
+.progreso-card__valor strong {
+  color: #0f172a;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.progreso-card__valor span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.progreso-card__pie {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.progreso-card__metricas {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progreso-card__metricas li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: #475467;
+  font-size: 12px;
+}
+
+.progreso-card__metricas .progreso-metrica--alerta { background: #fff6ed; }
+
+.progreso-card .modal-btn { min-height: 40px; padding: 0 16px; font-size: 14px; }
+
+/* Estados vacío y error */
+.progreso-estado {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.progreso-estado h2 { margin: 0; color: #0f172a; font-size: 17px; }
+.progreso-estado p { margin: 0; color: #64748b; font-size: 14px; }
+.progreso-estado--error { border-color: #fecaca; }
+.progreso-estado--error h2 { color: #991b1b; }
+
+/* Skeleton de carga */
+.progreso-card--skeleton { gap: 12px; }
+
+.progreso-skeleton {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eef2f6 25%, #e2e8f0 50%, #eef2f6 75%);
+  background-size: 200% 100%;
+  animation: progreso-brillo 1.2s ease-in-out infinite;
+}
+
+.progreso-skeleton--titulo { width: 40%; height: 16px; }
+.progreso-skeleton--texto { width: 25%; height: 12px; }
+.progreso-skeleton--barra { width: 100%; height: 8px; border-radius: 999px; }
+
+@keyframes progreso-brillo {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.progreso-page .modal-btn:focus-visible {
+  outline: 3px solid #c7d2fe;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progreso-skeleton { animation: none; }
+}
+
+@media (max-width: 640px) {
+  .progreso-card__cabecera,
+  .progreso-resumen__barra { flex-direction: column; align-items: flex-start; }
+  .progreso-card__valor { text-align: left; }
+  .progreso-resumen__metricas { gap: 12px 32px; }
+}
