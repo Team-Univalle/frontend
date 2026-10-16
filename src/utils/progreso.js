@@ -34,6 +34,16 @@ export function porcentajeDe(ejecutadas, total) {
   return porcentaje;
 }
 
+// Progreso que ya calcula el backend en GET /events (total_subtasks, completed_subtasks, overdue_subtasks).
+// Devuelve null si el backend no envía esos campos, para usar calcularProgreso con las subtareas.
+export function progresoDesdeEvento(evento) {
+  const total = Number(evento?.total_subtasks);
+  const ejecutadas = Number(evento?.completed_subtasks);
+  const vencidas = Number(evento?.overdue_subtasks);
+  if (![total, ejecutadas, vencidas].every(Number.isFinite)) return null;
+  return { total, ejecutadas, pendientes: total - ejecutadas, vencidas, porcentaje: porcentajeDe(ejecutadas, total) };
+}
+
 // Badge según los rangos de la Guía de Diseño: verde 80%+, púrpura 50–79, gris 20–49, naranja 0–19.
 export function estadoProgreso(porcentaje, total) {
   if (!total) return { clave: 'vacio', etiqueta: 'Sin gestiones' };

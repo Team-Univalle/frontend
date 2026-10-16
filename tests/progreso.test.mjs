@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calcularProgreso, estadoProgreso, sumarProgresos } from '../src/utils/progreso.js';
+import { calcularProgreso, estadoProgreso, progresoDesdeEvento, sumarProgresos } from '../src/utils/progreso.js';
 
 const HOY = '2026-10-15';
 const gestiones = (ejecutadas, total) =>
@@ -63,4 +63,13 @@ test('badge según rango', () => {
 test('resumen global suma todos los eventos', () => {
   const global = sumarProgresos([calcularProgreso(gestiones(5, 7), HOY), calcularProgreso(gestiones(3, 6), HOY), calcularProgreso([], HOY)]);
   assert.deepEqual(global, { total: 13, ejecutadas: 8, pendientes: 5, vencidas: 0, porcentaje: 62 });
+});
+
+test('usa el progreso del backend cuando GET /events lo envía', () => {
+  assert.deepEqual(
+    progresoDesdeEvento({ total_subtasks: 7, completed_subtasks: 4, overdue_subtasks: 1, progress_percentage: 57 }),
+    { total: 7, ejecutadas: 4, pendientes: 3, vencidas: 1, porcentaje: 57 }
+  );
+  assert.equal(progresoDesdeEvento({ total_subtasks: 0, completed_subtasks: 0, overdue_subtasks: 0 }).porcentaje, 0);
+  assert.equal(progresoDesdeEvento({ id: 'sin-campos' }), null);
 });

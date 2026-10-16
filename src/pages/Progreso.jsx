@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ProgressBar, { ProgresoBadge } from '../components/ProgressBar';
 import { getEvents } from '../services/eventsService';
 import { getSubtasks } from '../services/subtasksService';
-import { calcularProgreso, sumarProgresos, textoProgreso } from '../utils/progreso';
+import { calcularProgreso, progresoDesdeEvento, sumarProgresos, textoProgreso } from '../utils/progreso';
 import '../components/Modal.css';
 import '../components/ProgressBar.css';
 import './Progreso.css';
@@ -17,9 +17,14 @@ function formatFechaCorta(value) {
 
 const comoLista = (response) => (Array.isArray(response) ? response : response?.results ?? []);
 
-// Las subtareas de todos los eventos se piden en paralelo, no una por una.
+// Usa el progreso que ya calcula el backend en GET /events (una sola petición).
+// Si el backend no lo envía, pide las subtareas de todos los eventos en paralelo y lo calcula aquí.
 async function obtenerProgreso() {
   const eventos = comoLista(await getEvents());
+  const desdeBackend = eventos.map(progresoDesdeEvento);
+  if (desdeBackend.every(Boolean)) {
+    return eventos.map((evento, i) => ({ evento, progreso: desdeBackend[i] }));
+  }
   const subtareas = await Promise.all(eventos.map((evento) => getSubtasks(evento.id)));
   return eventos.map((evento, i) => ({ evento, progreso: calcularProgreso(comoLista(subtareas[i])) }));
 }

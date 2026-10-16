@@ -160,7 +160,9 @@ export default function GestionesEstado({
     resultados.forEach((resultado, index) => {
       const { item, cambios } = lotes[index];
       if (resultado.status === 'fulfilled') {
-        confirmadas[item.id] = { ...item, ...cambios, ...resultado.value };
+        // Si el backend no devuelve "notes" es que no la guardó: no mostramos una nota que se perdería al recargar.
+        const guardoNota = resultado.value && Object.hasOwn(resultado.value, 'notes');
+        confirmadas[item.id] = { ...item, ...cambios, ...(guardoNota ? {} : { notes: item.notes }), ...resultado.value };
       } else {
         revertidas[item.id] = item;
         fallidas.push(item);
