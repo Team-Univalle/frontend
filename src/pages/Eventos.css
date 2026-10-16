@@ -29,3 +29,13 @@
   .eventos-header { align-items: stretch; flex-direction: column; }
   .eventos-header > button { width: 100%; }
 }
+
+/* Mismo ancho de contenido que Hoy, Crear y Progreso (max 960px, alineado a la izquierda). */
+.eventos-lista-page > :not(.dialog-backdrop) {
+  width: 100%;
+  max-width: 960px;
+  box-sizing: border-box;
+}
+
+/* Con 960px caben 3 tarjetas por fila (antes el mínimo de 310px dejaba solo 2). */
+.eventos-lista-page .eventos-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
