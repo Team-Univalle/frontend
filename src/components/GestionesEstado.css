@@ -1,0 +1,257 @@
+/* Panel de acciones superiores (Posponer / Marcar como hecha) */
+.ge-panel {
+  margin-bottom: 14px;
+  padding: 16px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.ge-panel__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ge-panel__acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ge-btn:hover:not(:disabled) { background: #f8fafc; }
+.ge-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.ge-btn--activo {
+  border-color: #5046e5;
+  background: #eef0ff;
+  color: #4338ca;
+}
+
+.ge-panel__ayuda {
+  margin: 12px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.ge-panel__seleccion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ge-panel__texto { display: flex; flex-direction: column; gap: 2px; }
+.ge-panel__texto strong { color: #0f172a; font-size: 14px; }
+.ge-panel__texto span,
+.ge-panel__contador { color: #64748b; font-size: 13px; }
+.ge-panel__contador { justify-self: end; }
+
+.ge-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Lista seleccionable (misma tarjeta con borde lateral) */
+.ge-lista {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ge-item {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  padding: 13px 20px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #5b4df0;
+  border-radius: 10px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.ge-item--marcada {
+  border-color: #a5b4fc;
+  border-left-color: #5b4df0;
+  background: #f5f6ff;
+}
+
+.ge-item--ejecutada { border-left-color: #12b76a; cursor: default; }
+.ge-item--pospuesta { border-left-color: #98a2b3; }
+.ge-item--ejecutada .ge-item__titulo strong { color: #475467; text-decoration: line-through; }
+
+.ge-item input,
+.ge-check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #5046e5;
+}
+
+.ge-item__titulo,
+.ge-item__tiempo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ge-item__titulo strong { color: #0f172a; font-size: 15px; }
+.ge-item__titulo small,
+.ge-item__tiempo small { color: #64748b; font-size: 12px; }
+.ge-item__tiempo span { color: #334155; font-size: 13px; }
+
+/* Gestiones ya mostradas por PlanLogistico: tachado + borde según estado */
+.gestion-card.gestion-card--lectura:has(.gestion-estado--ejecutada) { border-left-color: #12b76a; }
+.gestion-card.gestion-card--lectura:has(.gestion-estado--ejecutada) .gestion-resumen--titulo strong {
+  color: #475467;
+  text-decoration: line-through;
+}
+.gestion-card.gestion-card--lectura:has(.gestion-estado--pospuesta) { border-left-color: #98a2b3; }
+
+/* Modal de estado */
+.ge-modal { display: grid; gap: 16px; }
+.ge-modal__sub { margin: -4px 0 0; color: #64748b; font-size: 13px; }
+
+.ge-modal__lista {
+  margin: 0;
+  padding: 12px 14px 12px 30px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 13px;
+}
+
+.ge-campo { display: flex; flex-direction: column; gap: 6px; }
+.ge-campo label { color: #0f172a; font-size: 13px; font-weight: 600; }
+
+.ge-campo input,
+.ge-campo textarea {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+}
+
+.ge-campo textarea { resize: vertical; }
+.ge-campo [aria-invalid='true'] { border-color: #b91c1c; }
+.ge-campo__ayuda { color: #64748b; font-size: 12px; }
+.ge-campo__contador { align-self: flex-end; }
+
+.ge-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.ge-error div { display: flex; flex-direction: column; gap: 2px; }
+
+.ge-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: ge-girar 0.8s linear infinite;
+}
+
+/* Bitácora */
+.ge-bitacora {
+  margin-top: 24px;
+  padding: 18px 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.ge-bitacora h2 { margin: 0 0 12px; color: #0f172a; font-size: 1.05rem; }
+.ge-bitacora__vacio { margin: 0; color: #64748b; font-size: 14px; }
+.ge-bitacora__lista { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+
+.ge-bitacora__item {
+  padding: 10px 14px;
+  border-left: 4px solid #5b4df0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.ge-bitacora__item--ejecutada { border-left-color: #12b76a; }
+.ge-bitacora__item--pospuesta { border-left-color: #98a2b3; }
+.ge-bitacora__cabecera { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ge-bitacora__cabecera strong { color: #0f172a; font-size: 14px; }
+.ge-bitacora__item small { color: #64748b; font-size: 12px; }
+.ge-bitacora__item p { margin: 6px 0 0; color: #334155; font-size: 14px; white-space: pre-wrap; }
+
+/* Éxito: micro-animación del check en el toast */
+.ge-toast .toast::before {
+  content: '✓';
+  display: inline-block;
+  font-weight: 700;
+  animation: ge-check 0.45s ease-out;
+}
+
+.ge-btn:focus-visible,
+.ge-item:has(input:focus-visible),
+.ge-check:has(input:focus-visible),
+.ge-campo input:focus-visible,
+.ge-campo textarea:focus-visible {
+  outline: 3px solid #c7d2fe;
+  outline-offset: 2px;
+}
+
+@keyframes ge-check {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes ge-girar { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ge-toast .toast::before,
+  .ge-spinner { animation: none; }
+}
+
+@media (max-width: 640px) {
+  .ge-panel__seleccion { grid-template-columns: 1fr; }
+  .ge-panel__contador { justify-self: start; }
+  .ge-item { grid-template-columns: 22px minmax(0, 1fr); }
+  .ge-item__tiempo,
+  .ge-item .gestion-estado { grid-column: 2; }
+  .ge-error { flex-direction: column; align-items: stretch; }
+}

@@ -8,6 +8,8 @@ import {
 import ConfirmDialog from '../components/ConfirmDialog';
 import PlanLogistico from '../components/PlanLogistico';
 import ReprogramarModal from '../components/ReprogramarModal';
+import GestionesEstado from '../components/GestionesEstado';
+import { aplicarEnLista } from '../utils/estadoGestion';
 import {
   deleteEvent,
   getEvent,
@@ -501,6 +503,7 @@ export default function EventoDetalle() {
         </form>
       )}
 
+      <GestionesEstado items={subtasks} maxDate={eventData.fecha} notificar mostrarBitacora onAplicar={(cambios) => setSubtasks((lista) => aplicarEnLista(lista, cambios))}>
       <PlanLogistico
         mode="detail"
         items={subtasks}
@@ -528,6 +531,7 @@ export default function EventoDetalle() {
         draftRecovered={draftRecovered}
         onReprogram={openReprogram}
       />
+      </GestionesEstado>
 
       {reprogramItem && (
         <ReprogramarModal

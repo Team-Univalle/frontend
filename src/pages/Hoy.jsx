@@ -4,6 +4,8 @@ import { getHoyData } from '../services/hoyService';
 import { PLANNING_UPDATED } from '../services/planningEvents';
 import { getCurrentCapacity } from '../services/conflictsService';
 import ReprogramarModal from '../components/ReprogramarModal';
+import GestionesEstado from '../components/GestionesEstado';
+import { aplicarEnHoy } from '../utils/estadoGestion';
 import './Hoy.css';
 
 function filtrosKey() {
@@ -340,6 +342,7 @@ export default function Hoy() {
       </div>
 
       {/* TAREAS */}
+      <GestionesEstado items={[...vencidas, ...paraHoy, ...proximas]} onAplicar={(cambios) => setData((actual) => aplicarEnHoy(actual, cambios))}>
       {noHayTareas ? (
         <div className="estado-vacio" style={{ textAlign: 'center', padding: '50px 20px', background: '#ffffff', borderRadius: '12px', border: '1px dashed #cbd5e1', marginTop: '20px' }}>
           <div className="estado-vacio-icono" style={{ marginBottom: '12px', color: '#6366f1' }}>
@@ -435,6 +438,7 @@ export default function Hoy() {
           )}
         </>
       )}
+      </GestionesEstado>
 
       {notice && (
         <div className="toast-notificacion" role="status">
