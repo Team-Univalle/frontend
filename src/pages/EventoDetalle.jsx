@@ -8,6 +8,7 @@ import {
 import ConfirmDialog from '../components/ConfirmDialog';
 import PlanLogistico from '../components/PlanLogistico';
 import ReprogramarModal from '../components/ReprogramarModal';
+import ProgresoEvento from '../components/ProgresoEvento';
 import GestionesEstado from '../components/GestionesEstado';
 import { aplicarEnLista } from '../utils/estadoGestion';
 import {
@@ -471,7 +472,7 @@ export default function EventoDetalle() {
             </button>
           </div>
         </div>
-        <progress className="detalle-progreso" value={progress} max="100" aria-label={`Progreso del evento: ${progress}%`} />
+        <ProgresoEvento subtareas={subtasks} titulo={eventData.titulo} onAgregar={openCreateForm} />
       </section>
 
       {isEventEditOpen && (

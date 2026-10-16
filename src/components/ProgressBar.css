@@ -1,0 +1,104 @@
+/* Barra de progreso (HU-10): Primary sobre fondo plateado; Success al 100% */
+.progress-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.progress-bar__pista {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e9edf5;
+}
+
+.progress-bar--sm .progress-bar__pista { height: 6px; }
+.progress-bar--md .progress-bar__pista { height: 8px; }
+.progress-bar--lg .progress-bar__pista { height: 12px; }
+
+.progress-bar__relleno {
+  height: 100%;
+  border-radius: inherit;
+  background: #5046e5;
+  transition: width 0.45s ease, background-color 0.3s ease;
+}
+
+.progress-bar--completo .progress-bar__relleno { background: #15803d; }
+
+.progress-bar__texto {
+  margin: 0;
+  color: #475467;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.progress-bar--completo .progress-bar__texto { color: #067647; }
+
+/* Badge de estado del avance */
+.progreso-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.progreso-badge--completado,
+.progreso-badge--avanzado { color: #067647; background: #ecfdf3; }
+.progreso-badge--en-curso { color: #4338ca; background: #eef0ff; }
+.progreso-badge--iniciado,
+.progreso-badge--vacio { color: #475467; background: #f2f4f7; }
+.progreso-badge--por-iniciar { color: #b54708; background: #fff6ed; }
+
+/* Avisos: vacío (N = 0) y completado (100%) */
+.progreso-aviso {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475467;
+  font-size: 13px;
+}
+
+.progreso-aviso--exito {
+  border: 1px solid #abefc6;
+  background: #ecfdf3;
+  color: #067647;
+  font-weight: 600;
+}
+
+.progreso-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Integración en el resumen de /evento/:id */
+.progreso-evento {
+  display: grid;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.progreso-evento__fila {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.progreso-evento__fila .progress-bar { flex: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-bar__relleno { transition: none; }
+}
