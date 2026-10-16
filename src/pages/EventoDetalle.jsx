@@ -293,7 +293,6 @@ export default function EventoDetalle() {
         gestion: draft.gestion.trim(),
         fechaObjetivo: draft.fechaObjetivo,
         horasEstimadas: Number(draft.horasEstimadas),
-        estado: draft.estado,
       };
       const savedSubtask = editingSubtaskId
         ? await updateSubtask(editingSubtaskId, payload)

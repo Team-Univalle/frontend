@@ -194,7 +194,6 @@ export default function PlanLogistico({
             disabled={saving}
             onChange={onDraftChange}
             idPrefix="nueva-subtarea"
-            showStatus={isEditing}
             maxDate={maxDate}
           />
           {isEditing && original && (

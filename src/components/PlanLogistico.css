@@ -309,3 +309,61 @@
     margin-top: 8px;
   }
 }
+/* ==========================================================================
+   Formulario de crear/editar gestión en el detalle (.gestion-card--nueva)
+   Crear.css redefine .gestion-card con 4 columnas y, al cargarse después,
+   pisaba esta grilla: "Estado" caía en la columna del ícono (24px).
+   ========================================================================== */
+.gestion-card.gestion-card--nueva {
+  grid-template-columns: 24px minmax(0, 2fr) minmax(0, 1.2fr) minmax(0, .8fr);
+  padding-right: 14px;
+}
+
+/* Todo lo que no es campo (original, conflicto, errores, acciones) ocupa el ancho del formulario */
+.gestion-card--nueva > :not(.gestion-card__numero):not(.gestion-field) {
+  grid-column: 2 / -1;
+}
+
+.subtarea-original {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px dashed #c7d2fe;
+  border-radius: 8px;
+  background: #fff;
+  color: #475467;
+  font-size: 13px;
+}
+
+.subtarea-original button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+  cursor: pointer;
+}
+
+.subtarea-original button:disabled { cursor: not-allowed; opacity: .55; }
+
+@media (max-width: 1100px) {
+  .gestion-card.gestion-card--nueva { grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1fr); }
+  .gestion-card--nueva .gestion-field--nombre { grid-column: 2 / -1; }
+  .gestion-card--nueva .gestion-field:nth-of-type(2),
+  .gestion-card--nueva .gestion-field--estado { grid-column: 2; }
+  .gestion-card--nueva .gestion-field--horas { grid-column: 3; }
+}
+
+@media (max-width: 760px) {
+  .gestion-card.gestion-card--nueva { grid-template-columns: 24px minmax(0, 1fr); padding-right: 14px; }
+  .gestion-card--nueva .gestion-field,
+  .gestion-card--nueva .gestion-field:nth-of-type(2),
+  .gestion-card--nueva .gestion-field--estado,
+  .gestion-card--nueva .gestion-field--horas,
+  .gestion-card--nueva > :not(.gestion-card__numero):not(.gestion-field) { grid-column: 2; }
+}
