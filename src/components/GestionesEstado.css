@@ -77,6 +77,22 @@
   cursor: pointer;
 }
 
+/* En /hoy: mismo ancho y estilo que la tarjeta de capacidad y los filtros (max 960px) */
+.capacidad-card ~ .ge-panel,
+.capacidad-card ~ .ge-lista {
+  width: 100%;
+  max-width: 960px;
+  box-sizing: border-box;
+}
+
+.capacidad-card ~ .ge-panel {
+  margin-bottom: 32px;
+  padding: 16px 20px;
+  border-color: #e5e7eb;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(31, 24, 55, 0.04);
+}
+
 /* Lista seleccionable (misma tarjeta con borde lateral) */
 .ge-lista {
   display: grid;
