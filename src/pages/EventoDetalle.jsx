@@ -435,7 +435,7 @@ export default function EventoDetalle() {
   }
 
   return (
-    <main className="page-container">
+    <main className="page-container detalle-page">
       <header className="page-header">
         <div>
           <h1 className="page-header__title" id="evento-titulo">{eventData.titulo}</h1>
