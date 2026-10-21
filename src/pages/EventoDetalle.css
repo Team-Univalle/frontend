@@ -251,3 +251,11 @@
   .detalle-topbar h1 { font-size: 25px; }
   .detalle-progreso__valor { align-items: flex-start; flex-direction: column; gap: 2px; }
 }
+
+/* Mismo ancho de contenido que Hoy, Crear y Progreso (max 960px, alineado a la izquierda).
+   Se excluye el fondo del diálogo de confirmación porque es fijo y debe cubrir toda la pantalla. */
+.detalle-page > :not(.dialog-backdrop) {
+  width: 100%;
+  max-width: 960px;
+  box-sizing: border-box;
+}

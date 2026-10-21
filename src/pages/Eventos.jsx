@@ -63,7 +63,7 @@ export default function Eventos() {
   }
 
   return (
-    <main className="page-container">
+    <main className="page-container eventos-lista-page">
       <header className="page-header">
         <div>
           <h1 className="page-header__title">Eventos</h1>

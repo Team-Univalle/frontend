@@ -8,6 +8,9 @@ import {
 import ConfirmDialog from '../components/ConfirmDialog';
 import PlanLogistico from '../components/PlanLogistico';
 import ReprogramarModal from '../components/ReprogramarModal';
+import ProgresoEvento from '../components/ProgresoEvento';
+import GestionesEstado from '../components/GestionesEstado';
+import { aplicarEnLista } from '../utils/estadoGestion';
 import {
   deleteEvent,
   getEvent,
@@ -291,7 +294,6 @@ export default function EventoDetalle() {
         gestion: draft.gestion.trim(),
         fechaObjetivo: draft.fechaObjetivo,
         horasEstimadas: Number(draft.horasEstimadas),
-        estado: draft.estado,
       };
       const savedSubtask = editingSubtaskId
         ? await updateSubtask(editingSubtaskId, payload)
@@ -333,6 +335,7 @@ export default function EventoDetalle() {
   }
 
   function requestDeleteSubtask(item) {
+    if (String(item.estado ?? item.status).toLowerCase() === 'ejecutada') return; // histórico: no se elimina
     setSubtaskToDelete(item);
     setSubtaskDeleteError('');
   }
@@ -432,7 +435,7 @@ export default function EventoDetalle() {
   }
 
   return (
-    <main className="page-container">
+    <main className="page-container detalle-page">
       <header className="page-header">
         <div>
           <h1 className="page-header__title" id="evento-titulo">{eventData.titulo}</h1>
@@ -469,7 +472,7 @@ export default function EventoDetalle() {
             </button>
           </div>
         </div>
-        <progress className="detalle-progreso" value={progress} max="100" aria-label={`Progreso del evento: ${progress}%`} />
+        <ProgresoEvento subtareas={subtasks} titulo={eventData.titulo} onAgregar={openCreateForm} />
       </section>
 
       {isEventEditOpen && (
@@ -501,6 +504,7 @@ export default function EventoDetalle() {
         </form>
       )}
 
+      <GestionesEstado items={subtasks} maxDate={eventData.fecha} notificar mostrarBitacora onAplicar={(cambios) => setSubtasks((lista) => aplicarEnLista(lista, cambios))}>
       <PlanLogistico
         mode="detail"
         items={subtasks}
@@ -528,6 +532,7 @@ export default function EventoDetalle() {
         draftRecovered={draftRecovered}
         onReprogram={openReprogram}
       />
+      </GestionesEstado>
 
       {reprogramItem && (
         <ReprogramarModal
