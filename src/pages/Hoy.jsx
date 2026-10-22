@@ -306,7 +306,10 @@ export default function Hoy() {
           </button>
 
           {/* Selector de Evento */}
+          <label htmlFor="hoy-evento" className="hoy-filter-label">Filtrar por evento</label>
           <select
+            id="hoy-evento"
+            className="hoy-event-select"
             value={eventoActivo}
             onChange={(e) => setFiltroEvento(e.target.value)}
             style={{
@@ -316,8 +319,7 @@ export default function Hoy() {
               background: '#f8fafc',
               fontSize: '13px',
               color: '#334155',
-              cursor: 'pointer',
-              outline: 'none'
+              cursor: 'pointer'
             }}
           >
             <option value="todos">Evento: Todos</option>
