@@ -1,11 +1,19 @@
-import { Navigate, Routes, Route, Outlet } from 'react-router-dom';
-import AppLayout from '../components/AppLayout';
-import Hoy from '../pages/Hoy';
-import Eventos from '../pages/Eventos';
-import Crear from '../pages/Crear';
-import EventoDetalle from '../pages/EventoDetalle';
-import Progreso from '../pages/Progreso';
-import Login from '../pages/Login'; // <--- Tu nueva vista de login que crearemos
+import { lazy } from 'react';
+import { Navigate, Routes, Route, Outlet, useLocation } from 'react-router-dom';
+import RouteFeedback from '../components/RouteFeedback';
+
+const AppLayout = lazy(() => import('../components/AppLayout'));
+const Hoy = lazy(() => import('../pages/Hoy'));
+const Eventos = lazy(() => import('../pages/Eventos'));
+const Crear = lazy(() => import('../pages/Crear'));
+const EventoDetalle = lazy(() => import('../pages/EventoDetalle'));
+const Progreso = lazy(() => import('../pages/Progreso'));
+const Login = lazy(() => import('../pages/Login'));
+
+function Page({ children }) {
+  const { pathname } = useLocation();
+  return <RouteFeedback key={pathname}>{children}</RouteFeedback>;
+}
 
 // Componente auxiliar para proteger las rutas internas
 function ProtectedRoute() {
@@ -24,17 +32,17 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Ruta pública de Login */}
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<Page><Login /></Page>} />
 
       {/* Grupo de Rutas Protegidas bajo AppLayout */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<AppLayout />}>
+        <Route element={<RouteFeedback><AppLayout /></RouteFeedback>}>
           <Route index element={<Navigate to="/eventos" replace />} />
-          <Route path="/hoy" element={<Hoy />} />
-          <Route path="/eventos" element={<Eventos />} />
-          <Route path="/crear" element={<Crear />} />
-          <Route path="/evento/:id" element={<EventoDetalle />} />
-          <Route path="/progreso" element={<Progreso />} />
+          <Route path="/hoy" element={<Page><Hoy /></Page>} />
+          <Route path="/eventos" element={<Page><Eventos /></Page>} />
+          <Route path="/crear" element={<Page><Crear /></Page>} />
+          <Route path="/evento/:id" element={<Page><EventoDetalle /></Page>} />
+          <Route path="/progreso" element={<Page><Progreso /></Page>} />
         </Route>
       </Route>
 
