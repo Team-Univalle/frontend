@@ -11,6 +11,14 @@
   font-weight: 700;
 }
 
+.limite-campo__etiqueta {
+  margin-bottom: 8px;
+}
+
+.limite-campo__etiqueta label {
+  margin-bottom: 0;
+}
+
 .limite-campo__fila {
   display: flex;
   align-items: center;

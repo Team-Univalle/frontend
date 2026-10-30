@@ -5,6 +5,7 @@ import { createSubtask } from '../services/subtasksService';
 import { validateEvent } from '../utils/validateEvent';
 import Toast from '../components/Toast';
 import PlanLogistico from '../components/PlanLogistico';
+import AyudaTooltip from '../components/AyudaTooltip';
 import '../components/Toast.css';
 import './Crear.css';
 
@@ -290,7 +291,14 @@ export default function Crear() {
             </div>
 
             <div className="field field--limite">
-              <label htmlFor="limite">Límite diario</label>
+              <div className="ayuda-etiqueta">
+                <label htmlFor="limite">Límite diario</label>
+                <AyudaTooltip label="¿Para qué sirve el límite diario?">
+                  Es el máximo de horas de gestiones que quieres planificar por día. Si un cambio
+                  supera este límite, te avisaremos para que lo muevas, reduzcas sus horas o lo
+                  pospongas. Tu límite se cambia en Capacidad diaria, con el botón Cambiar.
+                </AyudaTooltip>
+              </div>
               <input
                 id="limite"
                 name="limite"

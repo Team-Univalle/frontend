@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
+import AyudaTooltip from './AyudaTooltip';
 import Modal from './Modal';
 import { getDailyLimit, saveDailyLimit } from '../services/limitService';
 import {
@@ -282,7 +283,14 @@ export default function LimiteDiarioModal({
           )}
 
           <div className="limite-campo">
-            <label htmlFor={inputId}>Horas por día</label>
+            <div className="ayuda-etiqueta limite-campo__etiqueta">
+              <label htmlFor={inputId}>Horas por día</label>
+              <AyudaTooltip label="¿Para qué sirve el límite diario?">
+                Es el máximo de horas de gestiones que quieres planificar por día. Si un cambio
+                supera este límite, te avisaremos para que lo muevas, reduzcas sus horas o lo
+                pospongas. Cambiarlo no mueve tus gestiones actuales.
+              </AyudaTooltip>
+            </div>
             <div className="limite-campo__fila">
               <input
                 id={inputId}
