@@ -236,6 +236,7 @@ export default function AppLayout() {
             aria-label="Cerrar sesión"
           >
             <LogOut size={16} aria-hidden="true" />
+            <span>Cerrar sesión</span>
           </button>
         </div>
       </aside>

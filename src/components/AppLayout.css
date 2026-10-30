@@ -104,6 +104,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -139,6 +140,10 @@
 }
 
 .app-logout-icon-btn {
+  gap: 7px;
+  white-space: nowrap;
+  font: inherit;
+  font-size: 12px;
   background: transparent;
   border: 1px solid #2e3b5e;
   color: #94a3b8;

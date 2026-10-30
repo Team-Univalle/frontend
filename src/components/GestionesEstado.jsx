@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { CalendarClock, CircleCheck } from 'lucide-react';
+import { CalendarClock, CircleCheck, RotateCcw } from 'lucide-react';
 import Toast from './Toast';
 import EstadoGestionModal from './EstadoGestionModal';
 import BitacoraGestiones from './BitacoraGestiones';
@@ -19,8 +19,9 @@ import './PlanLogistico.css';
 import './GestionesEstado.css';
 
 const ACCIONES = {
+  activar: { boton: 'Poner activas', titulo: 'Volver a activar gestiones ejecutadas', estado: 'Pendiente', icono: RotateCcw },
   posponer: { boton: 'Posponer', titulo: 'Posponer gestiones', estado: 'Pospuesta', icono: CalendarClock },
-  hecha: { boton: 'Marcar como hecha', titulo: 'Marcar gestiones como hechas', estado: 'Ejecutada', icono: CircleCheck },
+  hecha: { boton: 'Marcar como ejecutada', titulo: 'Marcar gestiones como ejecutadas', estado: 'Ejecutada', icono: CircleCheck },
 };
 
 const FORM_VACIO = { nota: '', fecha: '' };
@@ -62,7 +63,7 @@ export default function GestionesEstado({
     );
   }
 
-  const seleccionables = items.filter((item) => estadoDe(item) !== 'Ejecutada');
+  const seleccionables = items.filter((item) => accion === 'activar' ? estadoDe(item) === 'Ejecutada' : estadoDe(item) !== 'Ejecutada');
   const seleccionadas = seleccion.filter((id) => seleccionables.some((item) => item.id === id));
   const todas = seleccionables.length > 0 && seleccionadas.length === seleccionables.length;
 
@@ -131,7 +132,7 @@ export default function GestionesEstado({
         cambios: armarCambios(item, {
           estado: ACCIONES[accion].estado,
           nota: form.nota,
-          fecha: accion === 'posponer' ? form.fecha : '',
+          fecha: accion !== 'hecha' ? form.fecha : '',
         }),
       }))
       .filter(({ cambios }) => Object.keys(cambios).length > 0);
@@ -261,7 +262,7 @@ export default function GestionesEstado({
                     type="checkbox"
                     checked={marcada}
                     onChange={() => alternar(item.id)}
-                    disabled={ejecutada || guardando}
+                    disabled={!seleccionables.some((seleccionable) => seleccionable.id === item.id) || guardando}
                   />
                   <span className="ge-item__titulo">
                     <strong>{nombreDe(item)}</strong>

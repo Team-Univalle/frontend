@@ -19,14 +19,19 @@ export default function EstadoGestionModal({
   const idBase = useId();
   const formId = `${idBase}-form`;
   const esPosponer = accion === 'posponer';
+  const esActivar = accion === 'activar';
   const total = items.length;
 
-  const titulo = esPosponer
+  const titulo = esActivar
+    ? total === 1 ? 'Volver a activar gestión' : `Volver a activar ${total} gestiones`
+    : esPosponer
     ? total === 1 ? 'Posponer gestión' : `Posponer ${total} gestiones`
-    : total === 1 ? 'Marcar gestión como hecha' : `Marcar ${total} gestiones como hechas`;
-  const confirmar = esPosponer
+    : total === 1 ? 'Marcar gestión como ejecutada' : `Marcar ${total} gestiones como ejecutadas`;
+  const confirmar = esActivar
+    ? 'Poner activas'
+    : esPosponer
     ? 'Confirmar posposición'
-    : total === 1 ? 'Guardar como hecha' : 'Guardar como hechas';
+    : total === 1 ? 'Guardar como ejecutada' : 'Guardar como ejecutadas';
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -53,7 +58,7 @@ export default function EstadoGestionModal({
           {items.map((item) => <li key={item.id}>{nombreDe(item)}</li>)}
         </ul>
 
-        {esPosponer && (
+        {(esPosponer || esActivar) && (
           <div className="ge-campo">
             <label htmlFor={`${idBase}-fecha`}>Nueva fecha objetivo (opcional)</label>
             <input
@@ -78,7 +83,7 @@ export default function EstadoGestionModal({
 
         <div className="ge-campo">
           <label htmlFor={`${idBase}-nota`}>
-            {esPosponer ? 'Nota (opcional)' : 'Nota de ejecución (opcional)'}
+            {esPosponer || esActivar ? 'Nota (opcional)' : 'Nota de ejecución (opcional)'}
           </label>
           <textarea
             id={`${idBase}-nota`}
